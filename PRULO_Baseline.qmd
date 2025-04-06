@@ -9,7 +9,7 @@ number-depth: 3
 date: "2024-Aug-26"
 date-modified: "2025-Apr-5"
 
-bibliography: HealixBR references.bib
+bibliography: BasePRULO references.bib
 
 
 editor:
@@ -31,7 +31,7 @@ execute:
 
 # Introduction
 
-This analysis links to the [manuscript](#0) of the Healix BR product. The dataset is derived from the PRULO registry snapshot and live tables. A protocol has been previously prepared for the registry [@scholes2023].
+The following analysis is intended as a companion supplementary file to the [manuscript](https://onedrive.live.com/edit?id=A657866856217BF1!10470&resid=A657866856217BF1!10470&ithint=file%2Cdocx&authkey=!AO4TOxwaFGlAZGc&wdo=2&cid=a657866856217bf1) for this project. The dataset is derived from the PRULO registry snapshot and live tables. A protocol has been previously prepared for the registry [@scholes2023].
 
 ## Reporting
 
@@ -50,12 +50,6 @@ The analysis was conducted in RStudio IDE (RStudio 2024.12.0+467 "Kousa Dogwood"
     -   Patient characteristics
 
     -   Pathology characteristics (diagnosis)
-
-    -   Management and surgical technique
-
-    -   Treatment and repair survival
-
-    -   Adverse events and complications
 
     -   Patient reported outcomes
 
@@ -203,17 +197,19 @@ get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1)
 
 ## Analysis Aim
 
-To describe the clinical and patient-reported outcomes, in patients presenting for surgical review of shoulder pathology and electing to undergo reconstruction or repair of soft-tissue structures with a biodegradable anchor (Healix Advance BR, Depuy-Mitek, USA), at a private, regional orthopaedic clinic between 2020 - 2024.
+*Retrieved from the manuscript (edits in italics);*
+
+Optimising postoperative outcomes is dependent on appropriate patient selection. Previous studies have highlighted key patient characteristics which affect post operative outcomes. The aim of this study is to *describe* the *baseline* characteristics of patients that present to a regional practice with shoulder pathology, an*d* determine any differences (*when adjusted for covariates*) in PROMs responses *between* these groups at baseline preoperatively.
 
 ## Analysis Hypotheses
 
-It was hypothesised that i) a low incidence of adverse events would be observed and ii) that significant improvements in general function (QuickDASH) and pathology-specific (WORC) outcomes would be observed at up to 12months follow up.
+When adjusted for covariates, *Glenohumeral Instability* will demonstrate significantly increased pain and dysfunction at baseline compared to *Rotator Cuff* and *General* pathology cohorts.
 
 # Methods
 
 ### RECORD \[4\] - Study Design
 
-Subgroup analysis of a clinical registry embedded into private practice. Observational, cohort design.
+Subgroup analysis of a clinical registry embedded into private practice. Observational, cross-sectional design.
 
 ## Data Import and Preparation
 
@@ -297,7 +293,7 @@ colnames(PatientTable) <- Patient_Col
 
 ```
 
-A static registry snapshot was retrieved using the pre-specified function (see *Functions for Processing)* and formatted using *openxlsx* based on the fixed date of preparation of the snapshot (31-Mar-2024) and using *tidyverse* syntax and associated packages (*dplyr, lubridate*). Date columns were prepared for further analysis using *lubridate*.
+A static registry snapshot was retrieved using the pre-specified function (see *Functions for Processing)* and formatted using *openxlsx* based on the fixed date of preparation of the snapshot (30-Jun-2024) and using *tidyverse* syntax and associated packages (*dplyr, lubridate*). Date columns were prepared for further analysis using *lubridate*.
 
 ```{r}
 
@@ -305,7 +301,7 @@ A static registry snapshot was retrieved using the pre-specified function (see *
 gs4_auth(token = drive_token())
 
 # To get a snapshot from a specific folder (e.g., "20230415")
-specific_snapshot <- get_specific_snapshot("20240331")
+specific_snapshot <- get_specific_snapshot("20250331")
 
 
 ```
@@ -328,7 +324,8 @@ SnapshotGen <- openxlsx2::read_xlsx(
   colNames = TRUE,
   detectDates = TRUE
   ) |> dplyr::mutate(
-    Cohort = "General"
+    Cohort = "General",
+    across(starts_with("IC"),as.character)
   )
 
 SnapshotRC <- openxlsx2::read_xlsx(
@@ -337,7 +334,8 @@ SnapshotRC <- openxlsx2::read_xlsx(
   colNames = TRUE,
   detectDates = TRUE
   ) |> dplyr::mutate(
-    Cohort = "Rotator Cuff"
+    Cohort = "Rotator Cuff",
+    across(starts_with("IC"),as.character)
   )
 
 SnapshotGH <- openxlsx2::read_xlsx(
@@ -346,7 +344,8 @@ SnapshotGH <- openxlsx2::read_xlsx(
   colNames = TRUE,
   detectDates = TRUE
   ) |> dplyr::mutate(
-    Cohort = "Glenohumeral Instability"
+    Cohort = "Glenohumeral Instability",
+    across(starts_with("IC"),as.character)
   )
 
 
@@ -363,40 +362,28 @@ Dataframes were combined into one for further analysis.
 
 ```{r}
 #| label:  Slice-stack-1
-#| code-summary: "line up input frames"
+#| code-summary: "Line up input frames"
 
 
 SnapshotComb <- SnapshotRC |> dplyr::bind_rows(
   dplyr::select(SnapshotGH, -ExternalStudyTag)
   ) |> bind_rows(
     dplyr::select(
-      SnapshotGen, 
+      SnapshotGen,
       -ExternalStudyTag)
     ) |> dplyr::mutate(
-    PatientID = stringr::str_split_i(TreatmentUID,"\\.",1)
+    PatientID = stringr::str_split_i(TreatmentID,"\\.",1)
   ) |> relocate(
-    PatientID, .before = TreatmentUID
+    PatientID, .before = TreatmentID
   ) |> mutate(
     CombID = paste0(PatientID,".",AffectedSide)
   ) |> relocate(
-    CombID, .after = TreatmentUID
+    CombID, .after = TreatmentID
   ) |> relocate(
     Cohort, .before = EligibleAtPreop
   )
 
 ```
-
-## Revision 1 - Update Feb 2025
-
-*R316 and R317*
-
-...it is difficult to understand why the available data would be so low with regards to BMI and insurance type. It would seem to this reviewer that this would be fairly straightforward data to obtain from the medical record, if not from the patient themselves.
-
-*BMI is irretrievable from the clinical records - it is stored in another system.*
-
-...it is not clear to me why the data for tear type (full versus partial), involved tendons, etc have less than complete available data.
-
-An additional export of account data was prepared and imported to the workspace using the *readr* package, as well as *tidyverse* syntax and *stringr*, to categorise text fields.
 
 ```{r}
 #| echo: false
@@ -409,6 +396,7 @@ AcctNewFile = "1Xo58d7b6NJOVIxPbYmlCrDRiVGhmKan8"
 
 
 ```
+
 
 ```{r}
 
@@ -474,66 +462,7 @@ col_select = c(
 
 ```
 
-Additional intraoperative data was retrieved manually into a table and imported using *googlesheets.*
 
-```{r}
-
-# Authenticate for sheets using the same token
-gs4_auth(token = drive_token())
-
-
-SurgicalGapFill <- googlesheets4::read_sheet(
-  ss = SheetIDs$SurgicalGapSS, 
-  sheet = "Surgical", 
-  col_names = TRUE,
-  col_types = "ccccccccccccccccccccc"
-  ) |> dplyr::select(
-    !c(
-      FirstName,
-      LastName
-    )
-  )
-```
-
-Check that column names are aligned
-
-```{r}
-#| include: false
-##| echo: false
-
-SnapshotCols <- colnames(SnapshotComb)
-SurgicalCols <- colnames(SurgicalGapFill)
-
-# Find which columns from GapFilledData exist in Mastersheet2
-matching_cols <- dplyr::intersect(SnapshotCols, SurgicalCols)
-print("Columns that match between dataframes:")
-print(matching_cols)
-
-# Find columns in GapFilledData that don't exist in Mastersheet2
-missing_cols <- dplyr::setdiff(SurgicalCols, SnapshotCols)
-
- if(length(missing_cols) > 0) {
-  print("Warning: These columns in GapFilledData don't exist in Snapshot")
-  print(missing_cols)
-}
-```
-
-Upon review, one row of data was found to have a data entry error for one field (CuffTearSize) which was manually updated in the table.
-
-```{r}
-
-SnapshotComb1 <- dplyr::rows_update(
-  SnapshotComb,
-  SurgicalGapFill,
-  by = "TreatmentUID"
-) |> dplyr::mutate( #Update wayward tear size input
-  CuffTearSizeAP = if_else(
-    TreatmentUID == "1789.1",
-    "20",
-    CuffTearSizeAP
-  )
-)
-```
 
 ### RECORD \[5\] - Setting
 
@@ -541,7 +470,7 @@ The PRULO registry is based in a regional private practice for upper limb orthop
 
 ```{epoxy}
 
-The registry has {nrow(SnapshotComb1)} treatment records with the first patient enrolled {format(min(SnapshotComb1$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment record created {format(max(SnapshotComb1$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}.The registry snapshot was extracted on {format(ymd("20240331"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
+The registry has {nrow(SnapshotComb)} treatment records with the first patient enrolled {format(min(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment record created {format(max(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}.The registry snapshot was extracted on {format(ymd("20240331"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
 
 ```
 
@@ -563,33 +492,7 @@ Inclusion criteria;
 
 Data manipulation (add columns and filter tables based on column values) was performed with *tidyverse* and converted to display format using *gt*.
 
-```{r}
-##Identify Index List by SKU/Ref
 
-ImplantTable2 <- ImplantTable |> filter(stringr::str_detect(
-  stringr::str_to_lower(Description),
-  "advance.br")
-)
-
-IncludeAny = paste(ImplantTable2$Reference,sep = "|")
-
-```
-
-```{r}
-#| label: tbl-implants
-#| tbl-cap: "Summary of SKUs (Reference) used to identify cases of interest from the PRULO registry"
-
-
-# ImplantTable2 |> gt(
-#   rowname_col = "row"
-#   )
-#   
-
-knitr::kable(
-  ImplantTable2
-)
-
-```
 
 A dataframe was prepared to generate a flow chart of record retrieval, screening and patient follow up within the sample of interest.
 
@@ -599,12 +502,10 @@ A dataframe was prepared to generate a flow chart of record retrieval, screening
 #| code-summary: "CONSORT|STROBE"
 
 # Inclusion
-# - Surgical treatment
-# - With hardware of interest
+# - Eligible for Preop
+# - Not an Archived record prior to treatment
 # After "induction"
 # - Patient withdraws consent
-# - Treatment fails before analysis date
-# - Not eligible for 12m followup
 # 
 CurrentDate <- as.character("20240331")
 
@@ -612,45 +513,48 @@ CurrentDate <- as.character("20240331")
 STROBEFlow <- STROBEInput |> dplyr::filter(
   !is.na(TreatmentUID)
 ) |> dplyr::left_join(
-  SnapshotComb1 |> dplyr::select(
+  SnapshotComb |> dplyr::select(
     TreatmentUID,
     CombID,
     DateInitialExamination,
-    EligibleAtPreop,
-    EligibleAtx12months
+    TreatmentStatusNotes,
+    EligibleAtPreop
   ),
   by = "TreatmentUID"
 ) |> dplyr::mutate(
   exclusion1 = case_when(
-    is.na(SurgicalTreatment) ~ "Not a surgical treatment",
-    SurgicalTreatment == "Surgical" ~ NA_character_,
-    .default = "Not a surgical treatment"
-  ),
-  exclusion2 = case_when(
-    is.na(exclusion1) & stringr::str_detect(RegistryStatus,"Opt-out") ~ "Patient Opt-Out",
-    is.na(exclusion1) & is.na(ImplantCodes) ~ "No hardware of interest",
-    is.na(exclusion1) & Surgeon != "RP" ~ "Other Surgeon",
-    is.na(exclusion1) & stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|")) ~ NA_character_,
-    .default = "No hardware of interest"
-  ),
-  followup = if_else(
-    is.na(exclusion1) & is.na(exclusion2),
-    TreatmentUID,
-    NA_character_
-  ),
-  lost_followup = case_when(
-    is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Failed" & (ymd(DateStatusChange) < ymd(CurrentDate)) ~ "Repair failure",
-    is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "No further followup" & (ymd(DateStatusChange) < ymd(CurrentDate)) ~ "Patient Opt-out",
-    is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Ongoing" & is.na(EligibleAtx12months) ~ "Not eligible for followup"
-  ),
-  mitt = if_else(
-    !is.na(followup) & is.na(lost_followup),
-    TreatmentUID,
-    NA_character_
+    TreatmentStatus == "Archived" & is.na(DateTreatment) ~ TreatmentStatusNotes,
+    is.na(EligibleAtPreop) ~ TreatmentStatusNotes,
+    .default = NA_character_
+  )
 )
-) |> dplyr::rename(
-  trialno = "TreatmentUID"
-)
+  
+ 
+
+
+  
+#   exclusion2 = case_when(
+#     is.na(exclusion1) & stringr::str_detect(RegistryStatus,"Opt-out") ~ "Patient Opt-Out",
+#     .default = "No hardware of interest"
+#   ),
+#   followup = if_else(
+#     is.na(exclusion1) & is.na(exclusion2),
+#     TreatmentUID,
+#     NA_character_
+#   ),
+#   lost_followup = case_when(
+#     is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Failed" & (ymd(DateStatusChange) < ymd(CurrentDate)) ~ "Repair failure",
+#     is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "No further followup" & (ymd(DateStatusChange) < ymd(CurrentDate)) ~ "Patient Opt-out",
+#     is.na(exclusion1) & is.na(exclusion2) & TreatmentStatus == "Ongoing" & is.na(EligibleAtx12months) ~ "Not eligible for followup"
+#   ),
+#   mitt = if_else(
+#     !is.na(followup) & is.na(lost_followup),
+#     TreatmentUID,
+#     NA_character_
+# )
+# ) |> dplyr::rename(
+#   trialno = "TreatmentUID"
+# )
 
 ```
 
