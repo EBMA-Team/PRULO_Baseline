@@ -130,32 +130,17 @@ The packages drawn on to produce the following report are summarised in @tbl-pkg
 
 Access to PRULO datasets was pre-authorised using the *gargle* package and *googledrive*.
 
-```{r}
-#| label: auth1
-#| echo: false
-
-googledrive::drive_deauth()
-
-# Set the cache location
-options(gargle_oauth_cache = ".secrets")
-
-# Use the saved token for non-interactive auth
-googledrive::drive_auth(
-  email = "cscholes@ebma.com.au", 
-  cache = ".secrets"
-  )
-```
 
 ```{r}
 #| label: auth2
 #| echo: false
 
-options(
+gargle::options(
   gargle_oauth_cache = ".secrets",
   gargle_oauth_email = TRUE
 )
 
-drive_auth(cache = ".secrets", email = TRUE)
+googledrive::drive_auth(cache = ".secrets", email = TRUE)
 ```
 
 ## Functions for Processing
