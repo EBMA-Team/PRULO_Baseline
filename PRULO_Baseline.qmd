@@ -131,7 +131,7 @@ The packages drawn on to produce the following report are summarised in @tbl-pkg
 Access to PRULO datasets was pre-authorised using the *gargle* package and *googledrive*.
 
 ```{r}
-#| label: authorisation
+#| label: auth1
 #| echo: false
 
 # Set the cache location
@@ -145,7 +145,7 @@ googledrive::drive_auth(
 ```
 
 ```{r}
-#| label: authorisation2
+#| label: auth2
 #| echo: false
 
 options(
