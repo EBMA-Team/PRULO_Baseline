@@ -130,7 +130,6 @@ The packages drawn on to produce the following report are summarised in @tbl-pkg
 
 Access to PRULO datasets was pre-authorised using the *gargle* package and *googledrive*.
 
-
 ```{r}
 #| label: auth2
 #| echo: false
@@ -190,8 +189,6 @@ get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1)
   })
 }
 ```
-
-
 
 ## Analysis Aim
 
@@ -797,7 +794,7 @@ The dataframes containing patient-reported outcomes data were manipulated to red
 
 ### Rescore SMCQ
 
-The self-reported medical comorbidities questionnaire [@sangha2003] was manually rescored within the analysis.
+The self-reported medical comorbidities questionnaire [@sangha2003] was manually rescored within the analysis with the text response columns provided with the registry snapshot.
 
 ```{r}
 
@@ -822,24 +819,9 @@ SMCQScore <- Mastersheet2 |> dplyr::select(
    SMCQTotal = rowSums(across(ends_with("_Score")), na.rm = TRUE)
   )
 
-# ComorbHeartDisease_Preop
-# ComorbHighBloodPressure_Preop     
-# ComorbLungDisease_Preop         
-# ComorbDiabetes_Preop              
-# ComorbUlcer_Preop                
-# ComorbKidneyDisease_Preop        
-# ComorbLiverDisease_Preop           
-# ComorbAnemia_Preop             
-# ComorbCancer_Preop              
-# ComorbAnxietyDepression_Preop    
-# ComorbOsteoArthritis_Preop         
-# ComorbBackPain_Preop           
-# ComorbRheumatoidArthritis_Preop
-# ComorbBloodClots_Preop
-
 ```
 
-Return SMCQ total score to Snapshot dataframe
+Return SMCQ total score to Mastersheet dataframe
 
 ```{r}
 
@@ -928,23 +910,35 @@ knitr::knit_print(MissFig1)
 
 A brief literature review was conducted to identify potential factors that should be adjusted for when assessing the effect of *Cohort* on *PROMs scores* in the present sample. It is important to adjust the relationship between the predictor (Cohort) and the outcome (PROM score) for confounders - variables that influence both the predictor and the outcome [@tennant2020]. The relationship between patient characteristics and PROMs outcomes are illustrated in Figure 2 for Rotator Cuff (Figure 2a), Glenohumeral Instability (Figure 2b) and Glenohumeral Osteoarthritis (Figure 2c).
 
-::: {#fig-rcfactor}
-(images/RC%20Factor%20Concepts%20Diagram_v2.jpg)
+:::: {#fig-rcfactor}
+<div>
 
-Summary of factors associated with outcomes from Rotator Cuff pathology and surgery
-:::
+\![ \](images/RC%20Factor%20Concepts%20Diagram_v2.jpg)
 
-::: {#fig-ghifactor}
-(images/Shoulder%20Instability%20Factor%20Concepts%20Diagram%202-01.jpg)
+</div>
 
-Summary of factors associated with outcomes from Glenohumeral Instability and surgery
-:::
+Factors associated with outcomes from Rotator Cuff pathology and surgery
+::::
 
-::: {#fig-ghoafactor}
-(images/OA_concepts%20map_v1.JPG)
+:::: {#fig-ghifactor}
+<div>
 
-Summary of factors associated with outcomes from Glenohumeral Osteoarthritis and surgery
-:::
+\![ \](images/Shoulder%20Instability%20Factor%20Concepts%20Diagram%202-01.jpg)
+
+</div>
+
+Factors associated with outcomes from Glenohumeral Instability and surgery
+::::
+
+:::: {#fig-ghoafactor}
+<div>
+
+\![ \](images/OA_concepts%20map_v1.JPG)
+
+</div>
+
+Factors associated with outcomes from Glenohumeral Osteoarthritis and surgery
+::::
 
 The important element in determining whether these factors should be considered confounders in the relationship between Registry Cohort and PROMs outcomes, is whether they are also associated with the Registry Cohort in which a patient (presentation) is allocated.
 
@@ -993,7 +987,7 @@ tidy_dag1 <- ggdag::tidy_dagitty(DAGPROM, layout = "auto") |>
     TRUE ~ name
   ))
 
-Figure3 <- ggplot(
+DagPlot <- ggplot(
   tidy_dag1, 
   aes(
     x = x, 
@@ -1043,7 +1037,7 @@ Figure3 <- ggplot(
     "Directed Acyclic Graph"
     )
 
-knitr::knit_print(Figure3)
+knitr::knit_print(DagPlot)
 
 
 ```
@@ -1113,11 +1107,10 @@ knitr::knit_print(Figure4)
 
 ```
 
-Figure 4:
-
 A summary table was generated to illustrate the status of key patient factors for inclusion into the analysis and their availability within the registry dataset (Table 2).
 
-Table 2: Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
+::: {#tbl-adjset}
+Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
 |-------------------|------------------|------------------|------------------|
@@ -1131,10 +1124,11 @@ Table 2: Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved 
 | Activity Level | ✅ | ✅ | ✅ |
 | Alcohol consumption | ? | ✅ | ✅ |
 | Smoking history | ✅ | ✅ | ✅ |
+:::
 
 #### Management
 
-The data tables were reduced to the required columns (PROMs and adjunct columns) in preparation for multiple imputation using chained equations [@white2010] with the *mice* package. One patient with bilateral RECORDs in the sample had one field (EducationLevel_Preop) mirrored from one side RECORD to the other, where it was missing. Character fields were converted to factors and the dataset was filtered to those cases that were eligible for 12months followup.
+The data tables were reduced to the required columns (PROMs and adjunct columns) in preparation for multiple imputation using chained equations [@white2010] with the *mice* package. Character fields were converted to factors. After an initial execution, strip plots revealed unstable estimates for *TreatmentType* and *StraightDist* and these were removed from the imputation model. The insurance status variable (*AccountType2*) was converted to a binary factor variable (*CompStatus*) indicating whether the patient was claiming treatment as part of a compensation scheme.
 
 ```{r}
 Mastersheet4 <- Mastersheet3 |> dplyr::select(
@@ -1142,8 +1136,8 @@ Mastersheet4 <- Mastersheet3 |> dplyr::select(
   Cohort,
   TreatmentType,
   IndexSide,
-  AccountType2,
-  StraightDist,
+  AccountType2, # retained for use in later operations
+  #StraightDist,
   SMCQTotal,
   AgeAtInitialExam,
   Sex2,
@@ -1187,17 +1181,6 @@ Mastersheet4 <- Mastersheet3 |> dplyr::select(
     "About 2 hours",
     "More than 2 hours"
     )
-  # across(
-  #   matches("MODEMQ", ignore.case = TRUE) & ends_with("_Preop", ignore.case = TRUE),
-  #   ~ forcats::fct_relevel(.x,
-  #     "Not applicable",
-  #     "Not at all likely",
-  #     "Slightly likely",
-  #     "Somewhat likely",
-  #     "Very likely",
-  #     "Extremely likely"
-  #   )
-  # )
   )
 ```
 
@@ -1232,6 +1215,7 @@ MasterImp <- mice::mice(
 
 ```{r}
 #| label: fig-density
+#| fig-cap: "Imputed distributions of QuickDASH overlaid on observed distribution"
 
 DASHDens <- mice::densityplot(MasterImp, ~QDASH_TotalScore_Preop)
 
@@ -1239,7 +1223,7 @@ knitr::knit_print(DASHDens)
 ```
 
 ```{r}
-#| label: fig-WORCstrip
+#| label: fig-micestrip
 #| fig-cap: "Stability of imputed variables over iterations for dataset"
 
 
@@ -1314,6 +1298,7 @@ knitr::kable(TableData)
 
 TablePatientChar <- Mastersheet4 |>
  dplyr::select(
+    TreatmentType,
     AgeAtInitialExam, 
     Sex2, 
     IndexSide,
@@ -1370,7 +1355,19 @@ gtsummary::as_flex_table(TablePatientChar)
 
 ```
 
-Patient characteristics for cases are summarised in @tbl-characteristics.
+Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below.
+
+```{r}
+#| label: fig-straightdist
+#| fig-cap: "Distribution of residential distance from clinic"
+
+DistDistr <- Mastersheet2 |> dplyr::filter(StraightDist < 200) |> ggplot(aes(y = Cohort, x = StraightDist)) + 
+  ggdist::stat_halfeye()
+
+
+knitr::knit_print(DistDistr)
+
+```
 
 ## RECORD \[15\] Patient-reported outcome measures
 
@@ -1827,5 +1824,167 @@ Partial funding of the PRULO Registry is provided by Depuy-Mitek (Johnson and Jo
 <!--# Authors should provide information on how to access any supplemental information such as the study protocol, raw data, or programming code. -->
 
 Access to study protocol and programming code are provided through this report.
+
+```{r}
+#| include: false
+#| label: export-figures
+
+# Create output directory if it doesn't exist
+dir.create("figures_export", showWarnings = FALSE)
+
+# Determine the figure path from knitr options
+knitr_fig_path <- knitr::opts_chunk$get("fig.path")
+if (is.null(knitr_fig_path)) {
+  # Try to guess based on common Quarto defaults
+  possible_paths <- c("figure-html/", "_files/figure-html/", "figures/")
+  for (path in possible_paths) {
+    if (dir.exists(path)) {
+      knitr_fig_path <- path
+      break
+    }
+  }
+}
+
+# If we found a path, process the figures
+if (!is.null(knitr_fig_path)) {
+  cat("Looking for figures in:", knitr_fig_path, "\n")
+  
+  # List all image files in the figure directory
+  fig_patterns <- "\\.(png|jpg|jpeg|pdf|svg)$"
+  fig_files <- list.files(path = knitr_fig_path, 
+                         pattern = fig_patterns, 
+                         full.names = TRUE,
+                         recursive = TRUE)
+  
+  # Display what we found
+  cat("Found", length(fig_files), "figure files\n")
+  
+  # Copy each figure to the export directory
+  if (length(fig_files) > 0) {
+    for (fig_file in fig_files) {
+      # Extract just the filename
+      fig_basename <- basename(fig_file)
+      
+      # Copy to export directory
+      file.copy(fig_file, 
+                file.path("figures_export", fig_basename), 
+                overwrite = TRUE)
+      
+      cat("Exported:", fig_basename, "\n")
+    }
+  } else {
+    cat("No figures found in", knitr_fig_path, "\n")
+  }
+} else {
+  cat("Could not determine figure directory path\n")
+}
+
+# Export any ggplot objects from the environment
+plot_objects <- ls(envir = .GlobalEnv)[sapply(ls(envir = .GlobalEnv), function(x) {
+  obj <- get(x, envir = .GlobalEnv)
+  inherits(obj, "ggplot")
+})]
+
+cat("Found", length(plot_objects), "ggplot objects in workspace\n")
+
+# Export each ggplot object found
+for (plot_name in plot_objects) {
+  plot_obj <- get(plot_name, envir = .GlobalEnv)
+  
+  # Use ggsave for ggplot objects
+  ggsave(
+    filename = file.path("figures_export", paste0(plot_name, ".png")),
+    plot = plot_obj,
+    width = 8,
+    height = 6,
+    dpi = 300
+  )
+  
+  cat("Exported ggplot:", plot_name, "\n")
+}
+
+# Search for consort plots and other special objects
+special_plot_objects <- ls(envir = .GlobalEnv)[sapply(ls(envir = .GlobalEnv), function(x) {
+  obj <- get(x, envir = .GlobalEnv)
+  # Check for consort plot objects
+  inherits(obj, "consort") || 
+  inherits(obj, "grob") || 
+  inherits(obj, "htmlwidget") ||
+  "print" %in% names(attributes(obj))
+})]
+
+cat("Found", length(special_plot_objects), "special plot objects (consort, grob, etc.)\n")
+
+# Handle special plot objects like consort plots
+for (plot_name in special_plot_objects) {
+  plot_obj <- get(plot_name, envir = .GlobalEnv)
+  
+  # Save as PNG
+  png_file <- file.path("figures_export", paste0(plot_name, ".png"))
+  
+  # Use different approaches based on object type
+  png(filename = png_file, width = 1800, height = 1200, res = 200)
+  
+  # Try to plot using the most appropriate method
+  tryCatch({
+    if (inherits(plot_obj, "consort")) {
+      # For consort plots
+      print(plot_obj)
+    } else if (inherits(plot_obj, "grob")) {
+      # For grid graphics objects
+      grid::grid.draw(plot_obj)
+    } else if (inherits(plot_obj, "htmlwidget")) {
+      # For htmlwidgets
+      print(plot_obj)
+    } else {
+      # General approach
+      print(plot_obj)
+    }
+    dev.off()
+    cat("Exported special plot:", plot_name, "\n")
+  }, error = function(e) {
+    dev.off()
+    cat("Error exporting", plot_name, ":", e$message, "\n")
+  })
+}
+
+# Additionally, search through entire project for figure files with specific labels
+quarto_project_dir <- getwd()
+all_files <- list.files(path = quarto_project_dir, 
+                        pattern = "\\.(png|jpg|jpeg|pdf|svg)$", 
+                        full.names = TRUE,
+                        recursive = TRUE)
+
+# Look for specific figure labels, especially the fig-strobe one
+fig_labels <- c("fig-strobe", "fig-")  # Add your important figure labels here
+for (label in fig_labels) {
+  matching_files <- grep(label, all_files, value = TRUE)
+  
+  if (length(matching_files) > 0) {
+    for (file in matching_files) {
+      file.copy(file, 
+                file.path("figures_export", basename(file)), 
+                overwrite = TRUE)
+      cat("Found and exported by label:", basename(file), "\n")
+    }
+  } else {
+    cat("No files found matching label:", label, "\n")
+  }
+}
+
+# Special handling for STROBEPlot if it exists
+if (exists("STROBEPlot", envir = .GlobalEnv)) {
+  tryCatch({
+    # Special handling for consort plots
+    png(file.path("figures_export", "STROBEPlot.png"), 
+        width = 1800, height = 1200, res = 200)
+    print(STROBEPlot)
+    dev.off()
+    cat("Exported STROBEPlot directly\n")
+  }, error = function(e) {
+    cat("Error exporting STROBEPlot:", e$message, "\n")
+  })
+}
+```
 
 # References
