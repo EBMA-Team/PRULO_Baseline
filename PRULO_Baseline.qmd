@@ -135,7 +135,7 @@ Access to PRULO datasets was pre-authorised using the *gargle* package and *goog
 #| label: auth2
 #| echo: false
 
-gargle::options(
+options(
   gargle_oauth_cache = ".secrets",
   gargle_oauth_email = TRUE
 )
