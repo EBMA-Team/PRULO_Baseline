@@ -631,9 +631,9 @@ PostCodeSum <- Mastersheet1 |> group_by(
 
 ```{r}
 #| echo: false
-#| eval: false
+#| eval: true
 
-register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = TRUE)
+ggmap::register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = TRUE)
 
 ```
 
