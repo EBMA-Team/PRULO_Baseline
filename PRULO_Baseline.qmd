@@ -140,7 +140,10 @@ options(
   gargle_oauth_email = TRUE
 )
 
-googledrive::drive_auth(cache = ".secrets", email = TRUE)
+googledrive::drive_auth(
+  cache = ".secrets", 
+  email = TRUE
+  )
 ```
 
 ## Functions for Processing
