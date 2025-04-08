@@ -134,6 +134,8 @@ Access to PRULO datasets was pre-authorised using the *gargle* package and *goog
 #| label: auth1
 #| echo: false
 
+googledrive::drive_deauth()
+
 # Set the cache location
 options(gargle_oauth_cache = ".secrets")
 
@@ -201,77 +203,7 @@ get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1)
 }
 ```
 
-```{r}
 
-
-# Function to perform imputation on a single iteration
-perform_imputation <- function(seed_value, data, pred_matrix, iterations, ...) {
-  set.seed(seed_value)
-  mice::mice(
-    data,
-    maxit = iterations,
-    m = 1,  # Each parallel process creates one imputation
-    printFlag = FALSE,
-    predictorMatrix = pred_matrix,
-    ...
-  )
-}
-
-# Main function that sets up parallel processing
-parallel_mice <- function(data, m = 10, maxit = 10, seed = 4218, ...) {
-  # Create predictor matrix once
-  predM <- make.predictorMatrix(data)
-  
-  # Switch off UID from MI algorithm
-  predM[,"TreatmentID"] <- 0 # Switch off ID from predicting
-  predM["TreatmentID",] <- 0
-  
-  # Set up parallel processing
-  future::plan(future::multisession, workers = min(parallel::detectCores() - 1, m))
-  
-  # Generate different seeds for each imputation
-  set.seed(seed)
-  seeds <- sample.int(10000, m)
-  
-  # Perform imputations in parallel with proper RNG handling
-  imp_list <- future.apply::future_lapply(1:m, function(i) {
-    imp <- perform_imputation(seeds[i], data, predM, maxit, ...)
-    # Extract the first completed dataset from each imputation
-    mice::complete(imp, 1)
-  }, future.seed = TRUE)
-  
-  # Create a proper mice object from the parallel results
-  # First, run a minimal mice model to get the structure right
-  init_imp <- mice(data, maxit = 0, m = m)
-  
-  # Replace the imputed datasets
-  for (i in 1:m) {
-    init_imp$imp <- lapply(names(init_imp$imp), function(vname) {
-      if (length(init_imp$imp[[vname]]) > 0) {
-        # For each imputed variable, extract values from our parallel results
-        imputed_indices <- which(is.na(data[[vname]]))
-        if (length(imputed_indices) > 0) {
-          values <- sapply(imp_list, function(ds) ds[[vname]][imputed_indices])
-          # If only one missing value, convert to matrix
-          if (length(imputed_indices) == 1) {
-            values <- matrix(values, nrow = 1)
-          }
-          return(values)
-        }
-      }
-      return(init_imp$imp[[vname]])
-    })
-    names(init_imp$imp) <- names(init_imp$imp)
-  }
-  
-  # Make sure other metadata is consistent
-  init_imp$iteration <- maxit
-  init_imp$seed <- seed
-  
-  return(init_imp)
-}
-
-```
 
 ## Analysis Aim
 
@@ -675,7 +607,7 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@benchimol2015] | Clinical notes reviewed by experienced reviewer and matched to ICD10 code by definition. |
 | Confounder | An variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for age and sex |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
@@ -1200,7 +1132,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Table 2: Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|----|----|----|----|
+|-------------------|------------------|------------------|------------------|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1884,7 +1816,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 ## RECORD \[19\] Limitations
 
 | Limitation | Impact | Mitigation | Interpretation |
-|----|----|----|----|
+|------------------|------------------|------------------|-------------------|
 | Diagnosis coding | Classification bias |  |  |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
