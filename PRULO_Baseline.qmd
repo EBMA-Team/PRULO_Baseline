@@ -675,7 +675,7 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|------------------|------------------|------------------|------------------|
+|----|----|----|----|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@benchimol2015] | Clinical notes reviewed by experienced reviewer and matched to ICD10 code by definition. |
 | Confounder | An variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for age and sex |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
@@ -1200,7 +1200,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Table 2: Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|-------------------|------------------|------------------|------------------|
+|----|----|----|----|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1884,7 +1884,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 ## RECORD \[19\] Limitations
 
 | Limitation | Impact | Mitigation | Interpretation |
-|------------------|------------------|------------------|-------------------|
+|----|----|----|----|
 | Diagnosis coding | Classification bias |  |  |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
