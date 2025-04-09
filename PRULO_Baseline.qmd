@@ -919,12 +919,10 @@ knitr::knit_print(MissFig1)
 
 #### Regression preparation
 
-A brief literature review was conducted to identify potential factors that should be adjusted for when assessing the effect of *Cohort* on *PROMs scores* in the present sample. It is important to adjust the relationship between the predictor (Cohort) and the outcome (PROM score) for confounders - variables that influence both the predictor and the outcome [@tennant2020]. The relationship between patient characteristics and PROMs outcomes are illustrated in Figure 2 for Rotator Cuff (Figure 2a), Glenohumeral Instability (Figure 2b) and Glenohumeral Osteoarthritis (Figure 2c).
-
 :::: {#fig-rcfactor}
 <div>
 
-\![ \](images/RC%20Factor%20Concepts%20Diagram_v2.jpg)
+![](images/RC Factor Concepts Diagram_v2.jpg)
 
 </div>
 
@@ -934,7 +932,7 @@ Factors associated with outcomes from Rotator Cuff pathology and surgery
 :::: {#fig-ghifactor}
 <div>
 
-\![ \](images/Shoulder%20Instability%20Factor%20Concepts%20Diagram%202-01.jpg)
+![](images/Shoulder Instability Factor Concepts Diagram 2.jpg)
 
 </div>
 
@@ -944,12 +942,14 @@ Factors associated with outcomes from Glenohumeral Instability and surgery
 :::: {#fig-ghoafactor}
 <div>
 
-\![ \](images/OA_concepts%20map_v1.JPG)
+![](images/OA_concepts map_v1.JPG)
 
 </div>
 
 Factors associated with outcomes from Glenohumeral Osteoarthritis and surgery
 ::::
+
+A brief literature review was conducted to identify potential factors that should be adjusted for when assessing the effect of *Cohort* on *PROMs scores* in the present sample. It is important to adjust the relationship between the predictor (Cohort) and the outcome (PROM score) for confounders - variables that influence both the predictor and the outcome [@tennant2020]. The relationship between patient characteristics and PROMs outcomes are illustrated in [@fig-rcfactor] for Rotator Cuff, Glenohumeral Instability [@fig-ghifactor] and Glenohumeral Osteoarthritis [@fig-ghoafactor].
 
 The important element in determining whether these factors should be considered confounders in the relationship between Registry Cohort and PROMs outcomes, is whether they are also associated with the Registry Cohort in which a patient (presentation) is allocated.
 
@@ -1137,7 +1137,7 @@ Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the 
 | Smoking history | ✅ | ✅ | ✅ |
 :::
 
-#### Management
+#### Missingness Management
 
 The data tables were reduced to the required columns (PROMs and adjunct columns) in preparation for multiple imputation using chained equations [@white2010] with the *mice* package. Character fields were converted to factors. After an initial execution, strip plots revealed unstable estimates for *TreatmentType* and *StraightDist* and these were removed from the imputation model. The insurance status variable (*AccountType2*) was converted to a binary factor variable (*CompStatus*) indicating whether the patient was claiming treatment as part of a compensation scheme.
 
@@ -1385,9 +1385,9 @@ Patient characteristics for cases are summarised in @tbl-characteristics. The di
 #| label: fig-straightdist
 #| fig-cap: "Distribution of residential distance from clinic"
 
-DistDistr <- Mastersheet2 |> dplyr::filter(StraightDist < 200) |> ggplot(aes(y = Cohort, x = StraightDist)) + 
+DistDistr <- Mastersheet2 |> dplyr::mutate(StraightDistTran = log(StraightDist)) |> ggplot(aes(y = Cohort, x = StraightDistTran)) + 
   ggdist::stat_halfeye() + labs(
-    x = "Straight line distance (KM)"
+    x = "Straight line distance (Log Transformed)"
   )
 
 
@@ -1428,8 +1428,6 @@ gtsummary::as_flex_table(Table4)
 
 The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5). A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
 
-
-
 ```{r}
 #| label: tbl-PROMfit
 #| tbl-cap: "Pooled linear model (unadjusted) for QuickDASH and EQ5D following multiple imputation"
@@ -1449,7 +1447,7 @@ QDASHfitimpUnadj <- tbl_regression(QDASHfitUnadj, tidy_fun = pool_and_tidy_mice,
                pvalue_fun = function(x) style_pvalue(x, digits = 3))  
 
 
-EQ5DfitimpUnadj <- with(
+EQ5DfitUnadj <- with(
   MasterImp,
   exp = stats::lm(
     EQ5D5L_IndexScore_Preop ~ Cohort
@@ -1545,13 +1543,10 @@ gtsummary::as_flex_table(TablePROMfitAdj)
 
 ```
 
-
 ```{epoxy}
 For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
 This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater. Post-hoc pairwise comparisons revealed significant differences between the Glenohumeral Instability group compared to the General and Rotator Cuff groups for both condition-specific and general health scales.
 ```
-
-
 
 ```{r}
 #| label: tbl-postQDASH
@@ -1844,8 +1839,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ## RECORD \[19\] Limitations
 
-::: {tbl-limitations}
-
+::: {#tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
 |------------------|------------------|------------------|-------------------|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
@@ -1853,6 +1847,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
 | Geographic constraint | Limits generalisability to regional \| rural patient population | The setting is close to a capital city \| metro but the patient population is somewhat distinct | The results should be interpreted with some caution when applying to the metropolitan patient context |
 
+Summary of key limitations in present analysis
 :::
 
 The key limitations are summarised in @tbl-limitations. However, it should be pointed out that classification bias is present for patients that present with multiple pathologies, with the registry system biased to placing cases in Rotator Cuff even if other concomitant pathologies are present which may be more relevant to contributing to symptoms that trigger surgical intervention.
