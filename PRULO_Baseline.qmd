@@ -1428,10 +1428,7 @@ gtsummary::as_flex_table(Table4)
 
 The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5). A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
 
-```{epoxy}
-For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
-This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater.
-```
+
 
 ```{r}
 #| label: tbl-PROMfit
@@ -1548,7 +1545,13 @@ gtsummary::as_flex_table(TablePROMfitAdj)
 
 ```
 
-Post-hoc pairwise comparisons revealed significant differences between the Glenohumeral Instability group compared to the General and Rotator Cuff groups for both condition-specific and general health scales.
+
+```{epoxy}
+For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
+This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater. Post-hoc pairwise comparisons revealed significant differences between the Glenohumeral Instability group compared to the General and Rotator Cuff groups for both condition-specific and general health scales.
+```
+
+
 
 ```{r}
 #| label: tbl-postQDASH
@@ -1842,12 +1845,14 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 ## RECORD \[19\] Limitations
 
 ::: {tbl-limitations}
+
 | Limitation | Impact | Mitigation | Interpretation |
 |------------------|------------------|------------------|-------------------|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
 | Geographic constraint | Limits generalisability to regional \| rural patient population | The setting is close to a capital city \| metro but the patient population is somewhat distinct | The results should be interpreted with some caution when applying to the metropolitan patient context |
+
 :::
 
 The key limitations are summarised in @tbl-limitations. However, it should be pointed out that classification bias is present for patients that present with multiple pathologies, with the registry system biased to placing cases in Rotator Cuff even if other concomitant pathologies are present which may be more relevant to contributing to symptoms that trigger surgical intervention.
