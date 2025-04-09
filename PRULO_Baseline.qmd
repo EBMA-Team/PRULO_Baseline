@@ -1426,14 +1426,12 @@ gtsummary::as_flex_table(Table4)
 
 ## RECORD \[16\] Main results
 
-The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5).
-A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
+The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5). A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
 
 ```{epoxy}
 For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
 This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater.
 ```
-
 
 ```{r}
 #| label: tbl-PROMfit
@@ -1480,8 +1478,6 @@ gtsummary::as_flex_table(TablePROMfitUnadj)
 
 
 ```
-
-
 
 ```{r}
 #| label: tbl-PROMfitAdj
@@ -1606,7 +1602,7 @@ EQ5DPredict <- marginaleffects::predictions(EQ5DfitAdj)
 
 ```{r}
 #| label: tbl-PROMimp
-#| tbl-cap: "Summary of model-predicted QuickDASH by Cohort"
+#| tbl-cap: "Summary of model-predicted QuickDASH and EQ5D (adjusted) by diagnostic group"
 
 
 TableQDASHImp <- tbl_summary(
@@ -1644,20 +1640,9 @@ TablePROMimpSum <- gtsummary::tbl_stack(
 gtsummary::as_flex_table(TablePROMimpSum)
 ```
 
-```{r}
-#| label: tbl-EQ5Dimp
-#| tbl-cap: "Summary of model-predicted EQ5D by Cohort"
-
-
-
-
-gtsummary::as_flex_table(TableEQ5Dsum )
-
-```
-
 ## RECORD \[17\] Sensitivity analyses
 
-Does it make a difference if subgroups (adhesive capsulitis and glenohumeral osteoarthritis) are split from the general cohort. Regular expressions were used in the *stringr* package to identify diagnosis codes that match adhesive capsulitis or glenohumeral osteoarthritis.
+Does it make a difference if subgroups (adhesive capsulitis and glenohumeral osteoarthritis) are split from the general cohort. Regular expressions were used in the *stringr* package to identify diagnosis codes that match two of the higher-incidence diagnoses, that are categorised under the General diagnostic group (adhesive capsulitis; glenohumeral osteoarthritis) as indicated in @tbl-diagnosis.
 
 ```{r}
 
@@ -1671,9 +1656,17 @@ Mastersheet5 <- Mastersheet4 |> left_join(
 ) |> mutate(
   Cohort2 = case_when(
     str_detect(DiagnosisPrimary , "M75.0") ~ "Adhesive Capsulitis",
-    str_detect(DiagnosisPrimary , "arthrop*|arthrosis") ~ "GHOsteoarthritis",
+    str_detect(DiagnosisPrimary , "arthrop*|arthrosis") ~ "Glenohumeral Osteoarthritis",
     .default = Cohort
-  )
+  ),
+  Cohort2 = forcats::fct_relevel(
+    Cohort2, 
+    "General",
+    "Adhesive Capsulitis",
+    "Glenohumeral Osteoarthritis",
+    "Rotator Cuff",
+    "Glenohumeral Instability"
+    )
 ) |> relocate(
   Cohort2,
   .before = Cohort
@@ -1691,7 +1684,7 @@ MasterSens1 <- Mastersheet5 |> dplyr::select(
   AlcoholConsumption_Preop,
   SmokingStatus_Preop,
   ActivityLevel_Preop,
-  StraightDist,
+  #StraightDist,
   SMCQTotal,
   Cohort2,
   QDASH_TotalScore_Preop,
@@ -1700,7 +1693,7 @@ MasterSens1 <- Mastersheet5 |> dplyr::select(
   AccountType2
 ) |> mutate(
   CompStatus = if_else(str_detect(AccountType2,"Work|DVA|TAC"),"Yes","No")
-) |> dplyr::select(
+  ) |> dplyr::select(
   -AccountType2
 )
 ```
@@ -1725,8 +1718,11 @@ MasterImp2 <- mice::mice(MasterSens1,
 
 ```
 
-```{r}
+The results identified differences between the expanded diagnostic groups, with the Glenohumeral Instability group significantly different to other groups for the QuickDASH, but not the EQ5D. However, the pairwise comparisons revealed estimates that were below the MCID for all significant comparisons for the QuickDASH.
 
+```{r}
+#| label: tbl-PROMsens
+#| tbl-cap: "Summary of linear model with multiple imputation for QuickDASH and EQ5D with expanded Cohort definitions."
 
 # Fit the lm model(s)
 # 
@@ -1734,12 +1730,6 @@ QDASHfitimp2 <- with(MasterImp2,exp = lm(
     QDASH_TotalScore_Preop ~ Cohort2 + AgeAtInitialExam + Sex2 + BilateralStatus + SMCQTotal + ActivityLevel_Preop + AlcoholConsumption_Preop + SmokingStatus_Preop
   )
   )
-
-```
-
-```{r}
-#| label: tbl-QDASHsens
-#| tbl-cap: "Summary of linear model with multiple imputation for QuickDASH with expanded Cohort definitions."
 
 QDASHfitimpsum2 <- tbl_regression(
   QDASHfitimp2, 
@@ -1760,34 +1750,6 @@ QDASHfitimpsum2 <- tbl_regression(
   estimate_fun = function(x) style_number(x, digits = 2),
   pvalue_fun = function(x) style_pvalue(x, digits = 3))  
 
-gtsummary::as_flex_table(QDASHfitimpsum2)
-
-
-```
-
-```{r}
-#| label: tbl-QDASHsenspost
-#| tbl-cap: "Post-hoc comparisons between modified cohorts for QuickDASH."
-
-QDASHfitPost2 <- marginaleffects::avg_comparisons(
-  QDASHfitimp2, 
-  variables = list(Cohort2 = "pairwise"),
-  type = "response"
-  #re.form = NA
-  )  
-
-knitr::kable(
-  QDASHfitPost2 |> dplyr::select(-term),
-  digits = c(
-    0,2,2,2,2,2,3,2,2
-  )
-  )
-
-```
-
-```{r}
-#| label: tbl-EQ5Dsens
-#| tbl-cap: "Summary of linear model with multiple imputation for EQ5D5L with expanded Cohort definitions."
 
 # Fit the lm model(s)
 # 
@@ -1815,8 +1777,37 @@ EQ5Dfitimpsum2 <- tbl_regression(
   estimate_fun = function(x) style_number(x, digits = 2),
   pvalue_fun = function(x) style_pvalue(x, digits = 3)) 
 
-gtsummary::as_flex_table(EQ5Dfitimpsum2)
+TablePROMSens <- gtsummary::tbl_merge(
+  tbls = list(
+    QDASHfitimpsum2,
+    EQ5Dfitimpsum2
+    ),
+  tab_spanner = c(
+    "**QuickDASH Total**", "**EQ5D Index**")
+)
 
+gtsummary::as_flex_table(TablePROMSens)
+
+
+```
+
+```{r}
+#| label: tbl-QDASHsenspost
+#| tbl-cap: "Post-hoc comparisons between modified cohorts for QuickDASH."
+
+QDASHfitPost2 <- marginaleffects::avg_comparisons(
+  QDASHfitimp2, 
+  variables = list(Cohort2 = "pairwise"),
+  type = "response"
+  #re.form = NA
+  )  
+
+knitr::kable(
+  QDASHfitPost2 |> dplyr::select(-term),
+  digits = c(
+    0,2,2,2,2,2,3,2,2
+  )
+  )
 
 ```
 
@@ -1850,14 +1841,20 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ## RECORD \[19\] Limitations
 
+::: {tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
 |------------------|------------------|------------------|-------------------|
-| Diagnosis coding | Classification bias |  |  |
+| Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
 | Geographic constraint | Limits generalisability to regional \| rural patient population | The setting is close to a capital city \| metro but the patient population is somewhat distinct | The results should be interpreted with some caution when applying to the metropolitan patient context |
+:::
+
+The key limitations are summarised in @tbl-limitations. However, it should be pointed out that classification bias is present for patients that present with multiple pathologies, with the registry system biased to placing cases in Rotator Cuff even if other concomitant pathologies are present which may be more relevant to contributing to symptoms that trigger surgical intervention.
 
 ## RECORD \[20\] Interpretation
+
+Patients presenting for surgical review at a regional orthopaedic private clinic are diverse in their demographics, residential location and pathology. The present results demonstrate significant differences in baseline patient experience prior to any offers of treatment that may help guide expectations for different diagnoses after surgery or non-surgical modalities. The present results provide a benchmark for future efforts in monitoring and mapping the response to treatment strategies in these varying patient groups in the Australian context.
 
 ## RECORD \[21\] Generalisability
 
@@ -1877,6 +1874,7 @@ Access to study protocol and programming code are provided through this report.
 
 ```{r}
 #| include: false
+#| eval: false
 #| label: export-figures
 
 # Create output directory if it doesn't exist
