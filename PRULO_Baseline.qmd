@@ -1854,7 +1854,7 @@ The key limitations are summarised in @tbl-limitations. However, it should be po
 
 ## RECORD \[20\] Interpretation
 
-Patients presenting for surgical review at a regional orthopaedic private clinic are diverse in their demographics, residential location and pathology. The present results demonstrate significant differences in baseline patient experience prior to any offers of treatment that may help guide expectations for different diagnoses after surgery or non-surgical modalities. The present results provide a benchmark for future efforts in monitoring and mapping the response to treatment strategies in these varying patient groups in the Australian context.
+Patients presenting for surgical review at a regional orthopaedic private clinic are diverse in their demographics, residential location and pathology. The present results demonstrate significant differences in baseline patient experience prior to any offers of treatment that may help guide expectations for different diagnoses after surgery or non-surgical modalities. However, these differences do not meet the published MCID for the QuickDASH. These differences may be sensitive to how the diagnostic groups are defined. The present results provide a benchmark for future efforts in monitoring and mapping the response to treatment strategies in these varying patient groups in the Australian context.
 
 ## RECORD \[21\] Generalisability
 
