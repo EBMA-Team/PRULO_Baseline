@@ -1137,7 +1137,7 @@ Mastersheet4 <- Mastersheet3 |> dplyr::select(
   TreatmentType,
   IndexSide,
   AccountType2, # retained for use in later operations
-  #StraightDist,
+  StraightDist, # retained for use in later operations
   SMCQTotal,
   AgeAtInitialExam,
   Sex2,
@@ -1190,11 +1190,13 @@ A predictor matrix was specified as per the *mice* package functions, to indicat
 
 predM <- mice::make.predictorMatrix(Mastersheet4)
 
-# Switch off IDs from predicting
+# Switch off variables from predicting
 predM[,"TreatmentID"] <- 0 
 predM["TreatmentID",] <- 0
 predM[,"AccountType2"] <- 0 
 predM["AccountType2",] <- 0
+predM[,"StraightDist"] <- 0 
+predM["StraightDist",] <- 0
 
 # Create a method vector
 meth <- mice::make.method(Mastersheet4)
@@ -1556,7 +1558,8 @@ knitr::kable(
 
 ```
 
-```{r, Predictions}
+```{r}
+#| label: Predictions
 
 QDASHPredict <-  marginaleffects::predictions(QDASHfitAdj)
 EQ5DPredict <- marginaleffects::predictions(EQ5DfitAdj)
