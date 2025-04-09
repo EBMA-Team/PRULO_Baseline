@@ -568,7 +568,7 @@ Of the {nrow(Mastersheet1)} RECORDs in the mastersheet, {nrow(Mastersheet1 |> fi
 
 ### RECORD \[6.2\] Algorithm validation
 
-RECORD selection code was cross-checked by manual RECORD checking within the registry snapshot for a subset (N = 10) of cases.
+Records selection code was cross-checked by manual checking within the registry snapshot for a subset (N = 10) of cases.
 
 ### RECORD \[6.3\] Data linkage
 
@@ -578,7 +578,7 @@ No data linkage was utilised for this analysis.
 
 The analysis variable set was based on the [core dataset](https://docs.google.com/spreadsheets/d/1fTzpU5WDcqe-y-TldJ7lwhNLRleUifWaWwcvGYU-GnM/edit?gid=2114241611#gid=2114241611) of the registry.
 
-The outcome variables in this analysis were the QuickDASH Total score and the EQ5D-5L Index score. The *Quick*DASH is the 11-item shortened version of a questionnaire assessing activity limitations and symptoms in people with musculoskeletal disorders of the upper limb [@beaton2005] which has similar measurement properties to the full 30-item DASH [@gummesson2006], particularly for patients undergoing RCR [@macdermid2015]. The QuickDASH assesses a variety of activities including work, sports, and social activities. A minimum of 10 out of 11 items are required for calculation of a *Quick*Dash score, which ranges from 0 (no disability) to 100 (most severe disability). The MCID score for the QuickDASH is 15.91 points [@franchignoni2014].
+The outcome variables in this analysis were the QuickDASH Total score and the EQ5D-5L Index score. The *Quick*DASH is the 11-item shortened version of a questionnaire assessing activity limitations and symptoms in people with musculoskeletal disorders of the upper limb [@beaton2005] which has similar measurement properties to the full 30-item DASH [@gummesson2006], particularly for patients undergoing rotator cuff repair [@macdermid2015]. The QuickDASH assesses a variety of activities including work, sports, and social activities. A minimum of 10 out of 11 items are required for calculation of a *Quick*Dash score, which ranges from 0 (no disability) to 100 (most severe disability). The MCID score for the QuickDASH is 15.91 points [@franchignoni2014].
 
 The EQ-5D 5L is a generic tool for measuring quality of life, describing health in terms of five dimensions: mobility, self-care, usual activities, pain and discomfort, and anxiety and depression [@conner-spady2015]. Patients respond to each item on a 5 level range of severity, following the format of "no problems", "slight problems", "moderate problems", "severe problems", and "unable to or extreme problems". The EQ-5D 5L has been shown to have good validity and discriminatory power in a range of pathologies [@janssen2012]. The MCID is approximately 0.074 [@walters2005].
 
@@ -593,13 +593,10 @@ For a discussion of biases in the context of the clinical registry utilised for 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
 |------------------|------------------|------------------|------------------|
-| Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@benchimol2015] | Clinical notes reviewed by experienced reviewer and matched to ICD10 code by definition. |
-| Confounder | An variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for age and sex |
+| Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@Benchimol2015] | Clinical notes reviewed by experienced reviewers and matched to ICD10 code by definition. |
+| Confounder | An variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
-| Prevalent user | Follow-up starts after eligible individuals have started the treatment. The follow-up time is left-truncated | [@nguyen2021] | Eligibility and enrollment is performed prior to treatment offering for any patient or new presentation. Index procedures identified for analysis are followed prior to surgery occurring. |
-| Selection | Treatments are selected based on post-treatment criteria | [@nguyen2021] | Unable to be mitigated fully - RECORDs are identified by presence of hardware code associated with suture of interest |
-| Immortal time | Individuals need to meet eligibility criteria that can only be assessed after follow-up has started | [@nguyen2021] | Patients enrolled at time of diagnosis |
-| Pseudoreplication | Analyse data while ignoring dependency between observations. Inadequate model specification. | [@davies2015; @lazic2010] | Cluster for patient in survival (all-cause failure and retear). Remove non-index RECORDs from dataset |
+| Pseudoreplication | Analyse data while ignoring dependency between observations. Inadequate model specification. | [@davies2015; @lazic2010] | Remove non-index treatments for patient-shoulder; Small proportion of bilateral presentations (see results) |
 
 Biases in analysis of observational cohort of a clinical registry
 :::
@@ -706,6 +703,8 @@ Map2 <- Map1 + geom_point(aes(x = lon, y = lat, col = "blue"),
 knitr::knit_print(Map2)
 ```
 
+### Account Type
+
 Data was read in from database table to determine account type.
 
 ```{r}
@@ -722,8 +721,6 @@ PatientTable1 <- PatientTable |> filter(
 )
 
 ```
-
-### Account Type
 
 ```{r}
 # Repeat process for acctData table
@@ -794,7 +791,7 @@ The dataframes containing patient-reported outcomes data were manipulated to red
 
 ### Rescore SMCQ
 
-The self-reported medical comorbidities questionnaire [@sangha2003] was manually rescored within the analysis with the text response columns provided with the registry snapshot.
+The SMCQ (self-reported medical comorbidities questionnaire) [@sangha2003] was manually rescored within the analysis with the text response columns provided by the registry snapshot.
 
 ```{r}
 
@@ -842,13 +839,27 @@ Mastersheet3 <- left_join(
 
 ## RECORD \[12\] Statistical methods
 
-A number of analytical techniques were employed to i) clean the data inputs as well as ii) evaluate missingness in the dataset and iii) complete the descriptive analysis of;
+A number of analytical techniques were employed to;
 
--   Patient characteristics
+-   Assess missingness
 
--   Pathology details
+-   Manage missingness with multiple imputation
 
--   Patient-reported outcomes
+-   Prepare a directed acyclic graph and adjustment set for regression analysis to compare PROMs between registry cohorts
+
+-   Present descriptives of patient characteristics
+
+    -   Describe geographic distribution of patients relative to the clinic
+
+-   Linear models to compare PROMs between registry cohorts
+
+    -   Unadjusted
+
+    -   Adjusted
+
+    -   Pairwise multiple comparisons between cohorts
+
+-   Sensitivity analysis with linear models applied with expanded definitions of cohorts
 
 ### RECORD \[12.1\] Access to population
 
@@ -866,7 +877,7 @@ Not applicable
 
 #### Evaluation
 
-Missingness was assessed with visualisation and table functions in the *naniar* package and compiled into figures using *patchwork*.
+Missingness was assessed with visualisation and table functions in the *naniar* package and compiled into figures.
 
 ```{r}
 #| label: fig-missing
@@ -1283,9 +1294,20 @@ The table below summarises patient diagnoses in the PRULO registry.
 
 TableData <- Mastersheet2 |>
   mutate(
-    ICD10 = stringr::str_extract(DiagnosisPrimary,"^[A-Za-z]+[0-9.]+")
-  ) |> count(ICD10, sort = TRUE) |>
-  slice_head(n = 5)
+    ICD10 = stringr::str_extract(DiagnosisPrimary,"^[A-Za-z][0-9]{2}(\\.[0-9]{1,2})?"),
+  ) |> count(ICD10, sort = TRUE) |> 
+  slice_head(n = 5) |> dplyr::mutate(
+    Description = case_when(
+      ICD10 == "M75.1" ~ "Rotator cuff syndrome",
+      ICD10 == "M19.0" ~ "Arthrosis other joints",
+      ICD10 == "M75.0" ~ "Adhesive capsulitis of the shoulder",
+      ICD10 == "S46.0" ~ "Injury of rotator cuff (tear)",
+      ICD10 == "S43.0" ~ "Dislocation glenohumeral joint"
+    )
+  ) |> relocate(
+    Description,
+    .before = n
+  )
 
 knitr::kable(TableData)
 
@@ -1296,7 +1318,7 @@ knitr::kable(TableData)
 
 ```{r}
 #| label: tbl-characteristics
-#| tbl-cap: "Summary of patient characteristics"
+#| tbl-cap: "Summary of patient characteristics - complete case analysis"
 
 TablePatientChar <- Mastersheet4 |>
  dplyr::select(
@@ -1357,14 +1379,16 @@ gtsummary::as_flex_table(TablePatientChar)
 
 ```
 
-Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below.
+Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The x-axis has been truncated to 200km for clarity.
 
 ```{r}
 #| label: fig-straightdist
 #| fig-cap: "Distribution of residential distance from clinic"
 
 DistDistr <- Mastersheet2 |> dplyr::filter(StraightDist < 200) |> ggplot(aes(y = Cohort, x = StraightDist)) + 
-  ggdist::stat_halfeye()
+  ggdist::stat_halfeye() + labs(
+    x = "Straight line distance (KM)"
+  )
 
 
 knitr::knit_print(DistDistr)
@@ -1373,7 +1397,7 @@ knitr::knit_print(DistDistr)
 
 ## RECORD \[15\] Patient-reported outcome measures
 
-The QuickDASH total score and WORC Normalised Index, as well as Question 3 of the Physical sub-scale of the WORC were visualised using the *ggdist* and *ggplot2* packages. Plots were arranged using the *patchwork* package.
+Complete case analysis of the QuickDASH total score and EQ5D Index were summarised using the *gtsummary* package. A significant reduction in QuickDASH
 
 ```{r}
 #| label: tbl-proms
@@ -1389,7 +1413,11 @@ Table4 <- tbl_summary(
     QDASH_TotalScore_Preop = as.numeric(QDASH_TotalScore_Preop),
     EQ5D5L_IndexScore_Preop = as.numeric(EQ5D5L_IndexScore_Preop)
     ),
-  by = Cohort
+  by = Cohort,
+  label = list(
+    QDASH_TotalScore_Preop = "QuickDASH Total",
+    EQ5D5L_IndexScore_Preop = "EQ5D Index"
+    )
 ) |> add_overall() |> add_p()
 
 gtsummary::as_flex_table(Table4)
@@ -1398,11 +1426,18 @@ gtsummary::as_flex_table(Table4)
 
 ## RECORD \[16\] Main results
 
-The imputed datasets for QDASH and EQ5D5L were modeled with a linear model in *lm*
+The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5).
+A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
+
+```{epoxy}
+For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
+This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater.
+```
+
 
 ```{r}
-#| label: tbl-QDASHfit
-#| tbl-cap: "Pooled linear mixed effects model for QuickDASH"
+#| label: tbl-PROMfit
+#| tbl-cap: "Pooled linear model (unadjusted) for QuickDASH and EQ5D following multiple imputation"
 
 QDASHfitUnadj <- with(
   MasterImp,
@@ -1418,16 +1453,8 @@ QDASHfitimpUnadj <- tbl_regression(QDASHfitUnadj, tidy_fun = pool_and_tidy_mice,
                estimate_fun = function(x) style_number(x, digits = 2), 
                pvalue_fun = function(x) style_pvalue(x, digits = 3))  
 
-gtsummary::as_flex_table(QDASHfitimpUnadj)
 
-
-```
-
-```{r}
-#| label: tbl-EQ5Dfit
-#| tbl-cap: "Pooled linear model for EQ5D"
-
-EQ5DfitUnadj <- with(
+EQ5DfitimpUnadj <- with(
   MasterImp,
   exp = stats::lm(
     EQ5D5L_IndexScore_Preop ~ Cohort
@@ -1441,14 +1468,24 @@ EQ5DfitimpUnadj <- tbl_regression(EQ5DfitUnadj, tidy_fun = pool_and_tidy_mice,
                estimate_fun = function(x) style_number(x, digits = 2), 
                pvalue_fun = function(x) style_pvalue(x, digits = 3))  
 
-gtsummary::as_flex_table(EQ5DfitimpUnadj)
+TablePROMfitUnadj <- gtsummary::tbl_merge(
+  tbls = list(
+    QDASHfitimpUnadj,
+    EQ5DfitimpUnadj),
+  tab_spanner = c(
+    "**QuickDASH Total**", "**EQ5D Index**")
+)
+
+gtsummary::as_flex_table(TablePROMfitUnadj)
 
 
 ```
 
+
+
 ```{r}
-#| label: tbl-QDASHfitAdj
-#| tbl-cap: "Pooled linear model for QuickDASH with adjustment"
+#| label: tbl-PROMfitAdj
+#| tbl-cap: "Pooled linear model (adjusted) for QuickDASH and EQ5D following multiple imputation"
 
 QDASHfitAdj <- with(
   MasterImp,
@@ -1474,16 +1511,7 @@ QDASHfitimpAdj <- tbl_regression(
     AlcoholConsumption_Preop ~ "Alcohol"
                  ),
   estimate_fun = function(x) style_number(x, digits = 2),
-  pvalue_fun = function(x) style_pvalue(x, digits = 3))  
-
-gtsummary::as_flex_table(QDASHfitimpAdj)
-
-
-```
-
-```{r}
-#| label: tbl-EQ5DfitAdj
-#| tbl-cap: "Pooled linear model for EQ5D with adjustment"
+  pvalue_fun = function(x) style_pvalue(x, digits = 3)) 
 
 EQ5DfitAdj <- with(
   MasterImp,
@@ -1511,14 +1539,24 @@ EQ5DfitimpAdj <- tbl_regression(
   estimate_fun = function(x) style_number(x, digits = 3),
   pvalue_fun = function(x) style_pvalue(x, digits = 3))  
 
-gtsummary::as_flex_table(EQ5DfitimpAdj)
+TablePROMfitAdj <- gtsummary::tbl_merge(
+  tbls = list(
+    QDASHfitimpAdj,
+    EQ5DfitimpAdj),
+  tab_spanner = c(
+    "**QuickDASH Total**", "**EQ5D Index**")
+)
+
+gtsummary::as_flex_table(TablePROMfitAdj)
 
 
 ```
 
+Post-hoc pairwise comparisons revealed significant differences between the Glenohumeral Instability group compared to the General and Rotator Cuff groups for both condition-specific and general health scales.
+
 ```{r}
 #| label: tbl-postQDASH
-#| tbl-cap: "Post-hoc comparisons between Cohorts for QuickDASH"
+#| tbl-cap: "Post-hoc comparisons between diagnostic groups for QuickDASH (adjusted)"
 
 QDASHPost <- marginaleffects::avg_comparisons(
   QDASHfitAdj, 
@@ -1539,7 +1577,7 @@ knitr::kable(
 
 ```{r}
 #| label: tbl-postEQ5D
-#| tbl-cap: "Post-hoc comparisons between Cohorts for EQ5D"
+#| tbl-cap: "Post-hoc comparisons between diagnostic groups for EQ5D (adjusted)"
 
 EQ5DPost <- marginaleffects::avg_comparisons(
   EQ5DfitAdj, 
@@ -1567,7 +1605,7 @@ EQ5DPredict <- marginaleffects::predictions(EQ5DfitAdj)
 ```
 
 ```{r}
-#| label: tbl-QDASHimp
+#| label: tbl-PROMimp
 #| tbl-cap: "Summary of model-predicted QuickDASH by Cohort"
 
 
@@ -1578,12 +1616,32 @@ TableQDASHImp <- tbl_summary(
   ),
   by = Cohort,
   label = list(
-    QDASH_TotalScore_Preop ~ "QuickDASH"
+    QDASH_TotalScore_Preop ~ "QuickDASH Total"
   ),
   statistic = list(all_continuous() ~ "{median} ({p25} - {p75})")
     )
 
-gtsummary::as_flex_table(TableQDASHImp)
+TableEQ5DImp <- tbl_summary(
+  EQ5DPredict %>% dplyr::select(
+    Cohort,
+    EQ5D5L_IndexScore_Preop
+  ),
+  by = Cohort,
+  label = list(
+    EQ5D5L_IndexScore_Preop ~ "EQ5D Index"
+  ),
+  statistic = list(all_continuous() ~ "{median} ({p25} - {p75})")
+    )
+
+TablePROMimpSum <- gtsummary::tbl_stack(
+  list(
+    TableQDASHImp,
+    TableEQ5DImp
+  )
+)
+
+
+gtsummary::as_flex_table(TablePROMimpSum)
 ```
 
 ```{r}
@@ -1591,17 +1649,6 @@ gtsummary::as_flex_table(TableQDASHImp)
 #| tbl-cap: "Summary of model-predicted EQ5D by Cohort"
 
 
-TableEQ5Dsum <- tbl_summary(
-  EQ5DPredict %>% dplyr::select(
-    Cohort,
-    EQ5D5L_IndexScore_Preop
-  ),
-  by = Cohort,
-  label = list(
-    EQ5D5L_IndexScore_Preop ~ "Index Score"
-  ),
-  statistic = list(all_continuous() ~ "{median} ({p25} - {p75})")
-    )
 
 
 gtsummary::as_flex_table(TableEQ5Dsum )
