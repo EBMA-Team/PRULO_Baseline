@@ -514,7 +514,7 @@ STROBEFlow <- STROBEInput |> dplyr::filter(
   exclusion1 = case_when(
     EligibleAtPreop2 == "No" & stringr::str_detect(RegistryStatus, "Opt-out") & DateRegistryStatus < DateTreatment ~ "Patient opt-out",
     TreatmentStatus == "Archived" & EligibleAtPreop2 == "No" ~ "Not eligible for registry",
-    TreatmentStatus != "Archived" & EligibleAtPreop2 == "No" & DateDiff1 >= 0 ~ "Retrospective RECORD",
+    TreatmentStatus != "Archived" & EligibleAtPreop2 == "No" & DateDiff1 >= 0 ~ "Retrospective Record",
     EligibleAtPreop2 == "No" ~ "Unknown",
     .default = NA_character_
   ), 
