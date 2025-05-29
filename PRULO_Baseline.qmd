@@ -1333,7 +1333,8 @@ TablePatientChar <- Mastersheet4 |>
     SmokingStatus_Preop,
     ActivityLevel_Preop,
     AlcoholConsumption_Preop,
-    AccountType2
+    AccountType2,
+    Cohort
     ) |>
   tbl_summary(
     label = list(
@@ -1349,6 +1350,7 @@ TablePatientChar <- Mastersheet4 |>
     AlcoholConsumption_Preop ~ "Alcohol",
     AccountType2 ~ "Insurance"
     ),
+    by = Cohort,
     type = list(
     Sex2 ~ "dichotomous",
     IndexSide ~ "dichotomous"),
@@ -1373,13 +1375,13 @@ TablePatientChar <- Mastersheet4 |>
       columns = label,
       rows = label == "TAC",
       footnote = "TAC = Transport Accident Commission"
-    )
+    ) |> add_overall()
 
 gtsummary::as_flex_table(TablePatientChar)
 
 ```
 
-Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The x-axis has been truncated to 200km for clarity.
+Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The straight-line distance (km) was log-transformed to enable visualisation. 
 
 ```{r}
 #| label: fig-straightdist
