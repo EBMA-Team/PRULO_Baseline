@@ -59,7 +59,8 @@ The analysis was conducted in RStudio IDE (RStudio 2024.12.0+467 "Kousa Dogwood"
 
 Packages were loaded initially with *pacman* package. Citations were applied to each library at first use in the text.
 
-```{r, load-pkgs}
+```{r}
+#| label: load-packages
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(# Load required packages
@@ -150,8 +151,7 @@ googledrive::drive_auth(
 A function was generated to retrieve files using the *googledrive* package, to call on later in the analysis for processing data imports.
 
 ```{r}
-
-#| label: folder
+#| label: snapshot-folder
 #| echo: false
 
 base_folder_id1 <- "1og1hWKEXFcy8v8pLSzA_Ii767bbCe_EK"
