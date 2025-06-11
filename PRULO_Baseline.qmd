@@ -592,9 +592,9 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|------------------|------------------|------------------|------------------|
+|----|----|----|----|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@Benchimol2015] | Clinical notes reviewed by experienced reviewers and matched to ICD10 code by definition. |
-| Confounder | An variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
+| Confounder | A variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
 | Pseudoreplication | Analyse data while ignoring dependency between observations. Inadequate model specification. | [@davies2015; @lazic2010] | Remove non-index treatments for patient-shoulder; Small proportion of bilateral presentations (see results) |
 
@@ -922,7 +922,7 @@ knitr::knit_print(MissFig1)
 :::: {#fig-rcfactor}
 <div>
 
-![](images/RC Factor Concepts Diagram_v2.jpg)
+![](images/RC%20Factor%20Concepts%20Diagram_v2.jpg)
 
 </div>
 
@@ -932,7 +932,7 @@ Factors associated with outcomes from Rotator Cuff pathology and surgery
 :::: {#fig-ghifactor}
 <div>
 
-![](images/Shoulder Instability Factor Concepts Diagram 2.jpg)
+![](images/Shoulder%20Instability%20Factor%20Concepts%20Diagram%202.jpg)
 
 </div>
 
@@ -942,7 +942,7 @@ Factors associated with outcomes from Glenohumeral Instability and surgery
 :::: {#fig-ghoafactor}
 <div>
 
-![](images/OA_concepts map_v1.JPG)
+![](images/OA_concepts%20map_v1.JPG)
 
 </div>
 
@@ -1124,7 +1124,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|-------------------|------------------|------------------|------------------|
+|----|----|----|----|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1381,7 +1381,7 @@ gtsummary::as_flex_table(TablePatientChar)
 
 ```
 
-Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The straight-line distance (km) was log-transformed to enable visualisation. 
+Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The straight-line distance (km) was log-transformed to enable visualisation.
 
 ```{r}
 #| label: fig-straightdist
@@ -1843,7 +1843,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ::: {#tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
-|------------------|------------------|------------------|-------------------|
+|----|----|----|----|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
