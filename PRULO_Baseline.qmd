@@ -112,7 +112,7 @@ pkgs <- grateful::cite_packages(
   dependencies = FALSE,
   output = "table", 
   out.dir = ".",
-  cite.tidyverse = FALSE,
+  cite.tidyverse = TRUE,
   include.RStudio = FALSE,
   bib.file = "grateful-refs"
   )
@@ -592,7 +592,7 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@Benchimol2015] | Clinical notes reviewed by experienced reviewers and matched to ICD10 code by definition. |
 | Confounder | A variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
@@ -1124,7 +1124,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1244,6 +1244,76 @@ plot(MasterImp)
 ```
 
 A strip plot (Figure 4) were used to visually inspect the convergence of the imputation iterations against the original dataset.
+
+#### Missingness (Individual question responses)
+
+Add the individual question responses to Mastersheet and prepare individual responses for analysis.
+
+```{r}
+
+
+# Define the EQ5D levels for consistent use
+eq5d_levels <- c("None", "Slight", "Moderate", "Severe", "Unable")
+
+# Function to recode EQ5D responses
+recode_eq5d <- function(x) {
+  case_when(
+    str_detect(x, "no|not") ~ "None",
+    str_detect(x, "slight") ~ "Slight", 
+    str_detect(x, "moderate") ~ "Moderate",
+    str_detect(x, "severe") ~ "Severe",
+    str_detect(x, "unable") ~ "Unable",
+    .default = NA_character_
+  )
+}
+
+# Function to convert to ordered factor
+factor_eq5d <- function(x) {
+  fct(x, levels = eq5d_levels, na = NA_character_)
+}
+
+# OPTION 1: Most concise - everything in one mutate with across
+MastersheetInd <- left_join(
+  Mastersheet4,
+  Mastersheet3 |> select(
+    TreatmentID,
+    starts_with("EQ5D"),
+    -contains("Index")
+  ),
+  by = "TreatmentID"
+) |> 
+  mutate(
+    # Step 1: Recode the text responses to standardized categories
+    across(
+      c(EQ5D5LMobility_Preop, EQ5D5LSelfcare_Preop, EQ5D5LActivity_Preop, 
+        EQ5D5LPain_Preop, EQ5D5LAnxiety_Preop),
+      recode_eq5d,
+      .names = "{.col}2"
+    ),
+    # Step 2: Convert to ordered factors with clean names
+    across(
+      ends_with("_Preop2"),
+      factor_eq5d,
+      .names = "EQ5D5L_{str_remove(str_remove(.col, '_Preop2$'), '^EQ5D5L')}"
+    )
+  )
+
+
+
+MasterIndPiv <- tidyr::pivot_longer(
+  data = MastersheetInd |> dplyr::select(
+    TreatmentID,
+    Cohort,
+    starts_with("EQ5D5L_"),
+    -(contains("IndexScore"))
+  ),
+  cols = !c(TreatmentID,Cohort),
+  names_to = c(".value","Dimension"),
+  names_sep = "_",
+  values_drop_na = TRUE
+  )
+
+```
 
 # Analysis Results
 
@@ -1423,6 +1493,46 @@ Table4 <- tbl_summary(
 ) |> add_overall() |> add_p()
 
 gtsummary::as_flex_table(Table4)
+
+```
+
+### Visualize responses
+
+```{r}
+# Method 1: Using dplyr to summarize the data
+# Create summary data
+MastersheetIndSum1 <- MasterIndPiv |>
+  filter(!is.na(EQ5D5L) & !is.na(Cohort) & !is.na(Dimension)) |>
+  group_by(Cohort, Dimension, EQ5D5L) %>%
+  summarise(count = n(), .groups = 'drop') |> mutate(
+    Cohort2 = case_when(
+      Cohort == "Glenohumeral Instability" ~ "GHI",
+      Cohort == "Rotator Cuff" ~ "RC",
+      .default = Cohort
+    )
+  )
+```
+
+```{r}
+#| label: fig-eq5d-ind
+#| fig-cap: "Distribution of individual responses to difficulties across the 5 dimenions of EQ5D5L by Cohort at baseline assessment"
+
+# Create the stacked bar plot
+Fig1EQ5D <- # OPTION 2: Faceted plot (RECOMMENDED for readability)
+ggplot(MastersheetIndSum1, aes(fill = EQ5D5L, y = count, x = Cohort2)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ Dimension, scales = "free_y", ncol = 3) +
+  labs(title = "EQ5D5L Responses by Cohort and Dimension (Faceted)",
+       x = "Cohort",
+       y = "Count",
+       fill = "EQ5D5L Response") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom",
+        strip.text = element_text(face = "bold")) +
+  guides(fill = guide_legend(title.position = "top", ncol = 5))
+
+knitr::knit_print(Fig1EQ5D)
 
 ```
 
@@ -1843,7 +1953,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ::: {#tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
