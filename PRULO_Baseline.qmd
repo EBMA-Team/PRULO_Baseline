@@ -296,7 +296,7 @@ A static registry snapshot was retrieved using the pre-specified function (see *
 gs4_auth(token = drive_token())
 
 # To get a snapshot from a specific folder (e.g., "20230415")
-specific_snapshot <- get_specific_snapshot("20250331")
+specific_snapshot <- get_specific_snapshot("20250630")
 
 
 ```
@@ -592,7 +592,7 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@Benchimol2015] | Clinical notes reviewed by experienced reviewers and matched to ICD10 code by definition. |
 | Confounder | A variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
@@ -766,16 +766,20 @@ Mastersheet2 <- Mastersheet1 |> left_join(
     DateOfBirth2
   ),
   by = "PatientID"
+  #relationship = "many-to-many"
 )  |> unite(
   col = "TempID",
   sep = ".",
   c("FirstName","LastName","DateOfBirth2"),
   remove = FALSE
-) |> left_join(AcctData1 |> dplyr::select(
+) |> left_join(AcctData1 |> distinct(
+  TempID, .keep_all = TRUE
+  ) |> dplyr::select(
   AccountType2,
   HealthFund2,
   TempID),
   by = "TempID"
+  #relationship = "many-to-many"
   ) |> left_join(
   PostCodeSum1 |> dplyr::select(
     Postcode,
@@ -784,6 +788,19 @@ Mastersheet2 <- Mastersheet1 |> left_join(
   by = "Postcode"
 )
 
+
+```
+
+Returning duplicate id entries
+
+```{r}
+MasterDup <- list(
+  One = Mastersheet2 |> group_by(TreatmentID) |> filter(n()>1),
+  Two = PatientTable1 |> group_by(PatientID) |> filter(n()>1),
+  Three = AcctData1 |> group_by(TempID) |> filter(n()>1),
+  Four = PostCodeSum1 |> group_by(Postcode) |> filter(n()>1)
+  
+)
 
 ```
 
@@ -1124,7 +1141,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1953,7 +1970,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ::: {#tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
