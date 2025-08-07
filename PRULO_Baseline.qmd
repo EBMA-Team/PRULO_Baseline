@@ -653,7 +653,7 @@ Postcodes <- paste(PostCodeFilt$Postcode, sep = ",")
 ```
 
 ```{r}
-#| eval: false
+#| eval: true
 
 
 # Geelong coordinates
