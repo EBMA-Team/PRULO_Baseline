@@ -673,6 +673,8 @@ PostCodeSum1 <- left_join(
   PostCodeSum |> filter(!(is.na(Postcode) | Postcode == "armstr")),
   PostCodeCoord,
 join_by("Postcode" == "postalcode")
+) |> dplyr::filter(
+  StraightDist < 1000
 )
 ```
 
