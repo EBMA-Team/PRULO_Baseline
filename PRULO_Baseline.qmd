@@ -733,7 +733,7 @@ PatientTable1 <- PatientTable |> filter(
 ```{r}
 # Repeat process for acctData table
 
-AcctData1 <- AcctDataNew |> filter(
+AcctData1 <- AcctData |> filter(
   !grepl("\\btest\\b",LastName,ignore.case = TRUE) & !is.na(DateOfBirth)
 ) |> mutate(
   DateOfBirth2 = as.numeric(as.duration(interval(ymd("1900-01-01"), ymd(DateOfBirth))),"days"),
