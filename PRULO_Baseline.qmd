@@ -64,8 +64,9 @@ Packages were loaded initially with *pacman* package. Citations were applied to 
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(# Load required packages
-  "ggdag",
+  "tidygeocoder",
   "ggmap",
+  "ggdag",
   "geosphere",
   "dplyr",
   "flextable",
@@ -217,7 +218,7 @@ Data was retrieved using *googlesheets4* to retrieve live database tables. Sourc
 SheetIDs <- list(
 DbSS = "https://docs.google.com/spreadsheets/d/1zyFuf0Wmij13ELTYNmdi_BprF8hU4QSCPsNZ0EYRXzo/edit",
 ImplantSS = "https://docs.google.com/spreadsheets/d/1MvT00sc8FzH5SXEi-yzEgW1H1ao3AOoakKqpg7UkxW4/edit",
-#AcctSS ="https://docs.google.com/spreadsheets/d/1zyFuf0Wmij13ELTYNmdi_BprF8hU4QSCPsNZ0EYRXzo/edit",
+AcctSS ="https://docs.google.com/spreadsheets/d/1zyFuf0Wmij13ELTYNmdi_BprF8hU4QSCPsNZ0EYRXzo/edit",
 SurgicalGapSS = "https://docs.google.com/spreadsheets/d/1qVGc27EEevETq3OvJsJ0UUMKhPG07H7J209ZCHN8Ww8/edit"
 )
 
@@ -248,13 +249,6 @@ ImplantTable <- googlesheets4::range_read(
   col_types = "nccc"
   )
 
-# AcctData <- googlesheets4::range_read(
-#   ss = SheetIDs$AcctSS,
-#   sheet = "AcctType2015", 
-#   range = "A1:G",
-#   col_names = TRUE, 
-#   col_types = "ccccDcc"
-#   )
 
 #To match to acctData
 PatientTable <- googlesheets4::range_read(
@@ -403,7 +397,7 @@ drive_download(
   overwrite = TRUE
 )
 
-AcctDataNew <- readr::read_tsv(
+AcctData <- readr::read_tsv(
   file = temp_file2,
   col_names = TRUE,
   #trim_ws = TRUE,
@@ -462,7 +456,7 @@ The PRULO registry is based in a regional private practice for upper limb orthop
 
 ```{epoxy}
 
-The registry has {nrow(SnapshotComb)} treatment RECORDs with the first patient enrolled {format(min(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment RECORD created {format(max(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}.The registry snapshot was extracted on {format(ymd("20250331"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
+The registry has {nrow(SnapshotComb)} treatment RECORDs with the first patient enrolled {format(min(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment RECORD created {format(max(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}. The registry snapshot was extracted on {format(ymd("20250630"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
 
 ```
 
@@ -620,14 +614,28 @@ PostCodeSum <- Mastersheet1 |> group_by(
   desc(PresentFreq)
 ) |> filter(
   !is.na(Postcode)
+) |> mutate(
+  Country = "Australia"
 )
 ```
 
 ```{r}
-#| echo: false
-#| eval: true
 
-ggmap::register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = TRUE)
+
+PostcodeGeo <- tidygeocoder::geocode(
+  .tbl = PostCodeSum,
+  postalcode = Postcode,
+  country = Country,
+  unique_only = TRUE
+)
+
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# ggmap::register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = FALSE)
 
 ```
 
@@ -638,35 +646,33 @@ PostCodeFilt <- PostCodeSum |> dplyr::select(Postcode) |> filter(!(is.na(Postcod
 
 Postcodes <- paste(PostCodeFilt$Postcode, sep = ",")
 
-PostCodeCoord <- ggmap::geocode(paste(Postcodes,"Australia"),
-               output = "latlona",
-               source = "google")
+# PostCodeCoord <- ggmap::geocode(paste(Postcodes,"Australia"),
+#                output = "latlona",
+#                source = "google")
 
 ```
 
 ```{r}
+#| eval: false
+
 
 # Geelong coordinates
 geelong_coords <- c(lon = 144.3598, lat = -38.1493)
 
-PostCodeCoord2 <- PostCodeCoord |>
+PostCodeCoord <- PostcodeGeo |>
   mutate(
-    Postcode = str_extract(address, "\\d+"),
-    # Create a matrix of longitude and latitude for each postcode
-    Coords = purrr::map2(lon, lat, ~ matrix(c(.x, .y), ncol = 2)),
+    Coords = purrr::map2(long, lat, ~ matrix(c(.x, .y), ncol = 2)),
     # Calculate distance using distHaversine
     StraightDist = purrr::map_dbl(Coords, ~ distHaversine(.x, geelong_coords))/1000
-  ) |> filter(
-    !is.na(Postcode)
   )
 
 ```
 
 ```{r}
 PostCodeSum1 <- left_join(
-  PostCodeSum |> filter(!(is.na(Postcode)|Postcode == "armstr")),
-  PostCodeCoord2,
-by = "Postcode"
+  PostCodeSum |> filter(!(is.na(Postcode) | Postcode == "armstr")),
+  PostCodeCoord,
+join_by("Postcode" == "postalcode")
 )
 ```
 
@@ -691,7 +697,7 @@ Map1 <- ggmap(
   extent = "device"
   )
 
-Map2 <- Map1 + geom_point(aes(x = lon, y = lat, col = "blue"), 
+Map2 <- Map1 + geom_point(aes(x = long, y = lat, col = "blue"), 
                           data = PostCodeSum1, 
                           size=PostCodeSum1$PresentFreq*circle_scale_amt, 
                           alpha = .5
@@ -1490,7 +1496,7 @@ Complete case analysis of the QuickDASH total score and EQ5D Index were summaris
 
 ```{r}
 #| label: tbl-proms
-#| tbl-cap: "Summary of patient-reported outcomes separated by Cohort"
+#| tbl-cap: "Summary of patient-reported outcomes separated by Cohort: Complete case analysis"
 
 Table4 <- tbl_summary(
   Mastersheet4 |> dplyr::select(
@@ -1729,7 +1735,7 @@ EQ5DPredict <- marginaleffects::predictions(EQ5DfitAdj)
 
 ```{r}
 #| label: tbl-PROMimp
-#| tbl-cap: "Summary of model-predicted QuickDASH and EQ5D (adjusted) by diagnostic group"
+#| tbl-cap: "Summary of model-predicted QuickDASH and EQ5D (adjusted) compared by diagnostic group"
 
 
 TableQDASHImp <- tbl_summary(
@@ -1782,15 +1788,23 @@ Mastersheet5 <- Mastersheet4 |> left_join(
   by = "TreatmentID"
 ) |> mutate(
   Cohort2 = case_when(
-    str_detect(DiagnosisPrimary , "M75.0") ~ "Adhesive Capsulitis",
-    str_detect(DiagnosisPrimary , "arthrop*|arthrosis") ~ "Glenohumeral Osteoarthritis",
+  DiagnosisPrimary == "T84.6 - Infection and inflammatory reaction due to internal fixation device" ~ "General",
+  DiagnosisPrimary == "M75.2 Bicipital tendinitis" ~ "General",
+  DiagnosisPrimary == "M25.51 Pain in shoulder" ~ "General",
+  DiagnosisPrimary == "M75.3 Calcific tendinitis of shoulder" ~ "General",
+  stringr::str_detect(DiagnosisPrimary,"Adhesive") ~ "Adhesive Capsulitis",
+  stringr::str_detect(DiagnosisPrimary,"arthro") ~ "Shoulder Arthritis",
+  stringr::str_detect(str_to_lower(DiagnosisPrimary),"fracture") ~ "Trauma",
+  stringr::str_detect(str_to_lower(DiagnosisPrimary),"acromio") ~ "Acromioclavicular",
     .default = Cohort
   ),
   Cohort2 = forcats::fct_relevel(
     Cohort2, 
     "General",
     "Adhesive Capsulitis",
-    "Glenohumeral Osteoarthritis",
+    "Shoulder Arthritis",
+    "Trauma",
+    "Acromioclavicular",
     "Rotator Cuff",
     "Glenohumeral Instability"
     )
