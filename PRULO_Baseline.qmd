@@ -633,9 +633,9 @@ PostcodeGeo <- tidygeocoder::geocode(
 
 ```{r}
 #| echo: false
-#| eval: false
+#| eval: true
 
-# ggmap::register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = FALSE)
+ggmap::register_google(key = "AIzaSyC4KUNAiSMIvh5Qm4u1PbHY23CHnCII1Hk", write = FALSE)
 
 ```
 
