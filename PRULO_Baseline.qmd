@@ -35,7 +35,7 @@ The following analysis is intended as a companion supplementary file to the [man
 
 ## Reporting
 
-The study was reported according to the RECORD guidelines [@benchimol2015] and companion checklist.
+The study was reported according to the RECORD guidelines [@Benchimol2015] and companion checklist.
 
 The analysis was conducted in RStudio IDE (RStudio 2024.12.0+467 "Kousa Dogwood" Release) using *Rbase*, *quarto* and attached packages to perform the following;
 
@@ -550,6 +550,8 @@ Mastersheet1 <- SnapshotComb |> dplyr::filter(
   Sex2 = case_when(
       Sex == "F" ~ "Female",
       Sex == "M" ~ "Male"),
+  Sex2 = forcats::fct(Sex2, levels = c("Female","Male")
+  )
 )
 
 ```
@@ -586,7 +588,7 @@ For a discussion of biases in the context of the clinical registry utilised for 
 
 ::: {#tbl-bias}
 | Bias | Definition | Source | Mitigation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Misclassification | Treatment RECORD labelled into incorrect cohort. PROMs package not aligned to clinical presentation | [@Benchimol2015] | Clinical notes reviewed by experienced reviewers and matched to ICD10 code by definition. |
 | Confounder | A variable of interest and a target outcome simultaneously influenced by a third variable | [@tennant2020] | PROMs analysis incorporated adjustment for potential confounders (see RECORD 12.5) |
 | Missing data | The absence of a data value where a treatment RECORD is eligible to have a data value collected | [@carroll2020] | Multiple imputation utilised |
@@ -1149,7 +1151,7 @@ A summary table was generated to illustrate the status of key patient factors fo
 Summary of potential adjustment set for *Cohort* -\> *PROMs* retrieved from the literature
 
 |  |  |  |  |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Variable | Associated with *Cohort* | Associated with *PROMs* | Available in present dataset |
 | Sex (Male) | ✅ | ✅ | ✅ |
 | Age (at initial examination) | ✅ | ✅ | ✅ |
@@ -1429,6 +1431,7 @@ TablePatientChar <- Mastersheet4 |>
     ActivityLevel_Preop,
     AlcoholConsumption_Preop,
     AccountType2,
+    StraightDist,
     Cohort
     ) |>
   tbl_summary(
@@ -1476,7 +1479,16 @@ gtsummary::as_flex_table(TablePatientChar)
 
 ```
 
-Patient characteristics for cases are summarised in @tbl-characteristics. The distance between patient residence and the clinic location is summarised in the figure below. The straight-line distance (km) was log-transformed to enable visualisation.
+Patient characteristics for cases are summarised in @tbl-characteristics.
+
+```{epoxy}
+
+
+The straight line distance (in raw form) from patient residence to the clinic ranged from {round(min(Mastersheet4$StraightDist, na.rm = TRUE),2)}km to {round(max(Mastersheet4$StraightDist, na.rm = TRUE),2)}km, with the most common distance {round(mode_dist <- Mastersheet4 |> count(StraightDist, sort = TRUE) |> slice(1) |> pull (StraightDist),2)}km.
+
+```
+
+The distance between patient residence and the clinic location by cohort is summarised in the figure below. The straight-line distance (km) was log-transformed to enable visualisation.
 
 ```{r}
 #| label: fig-straightdist
@@ -1493,8 +1505,6 @@ knitr::knit_print(DistDistr)
 ```
 
 ## RECORD \[15\] Patient-reported outcome measures
-
-Complete case analysis of the QuickDASH total score and EQ5D Index were summarised using the *gtsummary* package. A significant reduction in QuickDASH
 
 ```{r}
 #| label: tbl-proms
@@ -1520,6 +1530,8 @@ Table4 <- tbl_summary(
 gtsummary::as_flex_table(Table4)
 
 ```
+
+Complete case analysis of the QuickDASH total score and EQ5D Index were summarised using the *gtsummary* package (@tbl-proms). The Glenohumeral Instability cohort displayed significantly lower upper limb disability (QuickDASH) and higher self-rated general health (EQ5D) compared to the other cohorts.
 
 ### Visualize responses
 
@@ -1777,7 +1789,7 @@ gtsummary::as_flex_table(TablePROMimpSum)
 
 ## RECORD \[17\] Sensitivity analyses
 
-Does it make a difference if subgroups (adhesive capsulitis and glenohumeral osteoarthritis) are split from the general cohort. Regular expressions were used in the *stringr* package to identify diagnosis codes that match two of the higher-incidence diagnoses, that are categorised under the General diagnostic group (adhesive capsulitis; glenohumeral osteoarthritis) as indicated in @tbl-diagnosis.
+Does it make a difference if subgroups (adhesive capsulitis, osteoarthritis, trauma, acromioclavicular conditions) are split from the general cohort? Regular expressions were used in the *stringr* package to identify diagnosis codes that match two of the higher-incidence diagnoses, that are categorised under the General diagnostic group as indicated in @tbl-diagnosis.
 
 ```{r}
 
@@ -1832,6 +1844,15 @@ MasterSens1 <- Mastersheet5 |> dplyr::select(
   Cohort2,
   QDASH_TotalScore_Preop,
   EQ5D5L_IndexScore_Preop,
+  TreatmentType,
+  IndexSide,
+  #Surgeon2,
+  #BMI,
+  EducationLevel_Preop,
+  AlcoholConsumption_Preop,
+  AccountType2,
+  StraightDist,
+  Cohort2,
   matches("modem", ignore.case = TRUE) & ends_with("preop", ignore.case = TRUE),
   AccountType2
 ) |> mutate(
@@ -1842,6 +1863,74 @@ MasterSens1 <- Mastersheet5 |> dplyr::select(
 ```
 
 ```{r}
+#| label: tbl-sens-character
+#| tbl-cap: "Summary of patient characteristics - complete case analysis after recoding cohort"
+
+TableSensChar <- MasterSens1 |>
+ dplyr::select(
+    TreatmentType,
+    AgeAtInitialExam, 
+    Sex2, 
+    IndexSide,
+    #Surgeon2,
+    #BMI,
+    BilateralStatus,
+    EducationLevel_Preop,
+    SmokingStatus_Preop,
+    ActivityLevel_Preop,
+    AlcoholConsumption_Preop,
+    CompStatus,
+    StraightDist,
+    Cohort2
+    ) |>
+  tbl_summary(
+    label = list(
+    AgeAtInitialExam ~ "Age at Consult",
+    #Surgeon2 ~ "Surgeon",
+    #BMI ~ "Body Mass Index",
+    BilateralStatus ~ "Bilateral",
+    Sex2 ~ "Female",
+    IndexSide ~ "Non-dominant",
+    EducationLevel_Preop ~ "Education",
+    SmokingStatus_Preop ~ "Smoking",
+    ActivityLevel_Preop ~ "Activity",
+    AlcoholConsumption_Preop ~ "Alcohol",
+    CompStatus ~ "Insurance"
+    ),
+    by = Cohort2,
+    type = list(
+    Sex2 ~ "dichotomous",
+    IndexSide ~ "dichotomous"),
+    value = list(
+      Sex2 ~ "Female",
+      IndexSide ~ "Non-dominant"),
+    statistic = list(
+      AgeAtInitialExam ~ "{mean} ({sd})",
+      #BMI ~ "{mean} ({sd})",
+      all_categorical() ~ "{p}% ({n})"),
+    missing = "no") |>
+  add_n() |>
+  add_ci(statistic = list(all_categorical() ~ "{conf.low} - {conf.high}",
+                          all_continuous() ~ "{conf.low} - {conf.high}")) |>
+   add_stat_label(
+    location = "row"
+  ) |> modify_table_styling(
+      columns = label,
+      rows = label == "DVA",
+      footnote = "DVA = Department of Veterans Affairs"
+    ) |> modify_table_styling(
+      columns = label,
+      rows = label == "TAC",
+      footnote = "TAC = Transport Accident Commission"
+    ) |> add_overall()
+
+gtsummary::as_flex_table(TableSensChar)
+
+```
+
+```{r}
+
+MasterSens1
 
 predM2 <- make.predictorMatrix(MasterSens1)
 
@@ -1986,7 +2075,7 @@ Nevertheless, the results demonstrate that varying shoulder pathology is associa
 
 ::: {#tbl-limitations}
 | Limitation | Impact | Mitigation | Interpretation |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Diagnosis coding | Classification bias | Experienced review of clinical notes to establish primary pathology | Unable to be completely mitigated in cases presenting with multiple pathologies |
 | Model specification (covariates) | Risk that model is misspecified | DAG-based approach to covariate selection | Future work should be directed to building better quality evidence for covariate selection |
 | PROMs selection | Responsiveness across broad spectrum of shoulder pathologies | Validated, general-purpose upper limb score and | QuickDASH may not be as responsive to some pathologies included in the analysis (General cohort) |
