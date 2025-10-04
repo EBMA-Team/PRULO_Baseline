@@ -1929,8 +1929,34 @@ gtsummary::as_flex_table(TableSensChar)
 ```
 
 ```{r}
+#| label: tbl-proms-sens
+#| tbl-cap: "Summary of patient-reported outcomes separated by Cohort: Complete case analysis"
 
-MasterSens1
+TablePROMSens <- tbl_summary(
+  MasterSens1 |> dplyr::select(
+    QDASH_TotalScore_Preop,
+    EQ5D5L_IndexScore_Preop,
+    #MODEMQ1_Preop:MODEMQ6_Preop,
+    Cohort2
+  ) |> mutate(
+    QDASH_TotalScore_Preop = as.numeric(QDASH_TotalScore_Preop),
+    EQ5D5L_IndexScore_Preop = as.numeric(EQ5D5L_IndexScore_Preop)
+    ),
+  by = Cohort2,
+  label = list(
+    QDASH_TotalScore_Preop = "QuickDASH Total",
+    EQ5D5L_IndexScore_Preop = "EQ5D Index"
+    )
+) |> add_overall() |> add_p()
+
+gtsummary::as_flex_table(TablePROMSens)
+```
+
+
+
+```{r}
+
+# MasterSens1
 
 predM2 <- make.predictorMatrix(MasterSens1)
 
