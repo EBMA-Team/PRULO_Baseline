@@ -572,9 +572,7 @@ No data linkage was utilised for this analysis.
 
 ## RECORD \[7\] Variables
 
-The analysis variable set was based on the [core dataset](https://docs.google.com/spreadsheets/d/1fTzpU5WDcqe-y-TldJ7lwhNLRleUifWaWwcvGYU-GnM/edit?gid=2114241611#gid=2114241611) of the registry.
-
-The outcome variables in this analysis were the QuickDASH Total score and the EQ5D-5L Index score. The *Quick*DASH is the 11-item shortened version of a questionnaire assessing activity limitations and symptoms in people with musculoskeletal disorders of the upper limb [@beaton2005] which has similar measurement properties to the full 30-item DASH [@gummesson2006], particularly for patients undergoing rotator cuff repair [@macdermid2015]. The QuickDASH assesses a variety of activities including work, sports, and social activities. A minimum of 10 out of 11 items are required for calculation of a *Quick*Dash score, which ranges from 0 (no disability) to 100 (most severe disability). The MCID score for the QuickDASH is 15.91 points [@franchignoni2014].
+The analysis variable set was based on the [core dataset](https://docs.google.com/spreadsheets/d/1fTzpU5WDcqe-y-TldJ7lwhNLRleUifWaWwcvGYU-GnM/edit?gid=2114241611#gid=2114241611) of the registry. Cases were labelled with ICD-10 diagnostic codes to then group into registry cohorts. The outcome variables in this analysis were the QuickDASH Total score and the EQ5D-5L Index score. The *Quick*DASH is the 11-item shortened version of a questionnaire assessing activity limitations and symptoms in people with musculoskeletal disorders of the upper limb [@beaton2005] which has similar measurement properties to the full 30-item DASH [@gummesson2006], particularly for patients undergoing rotator cuff repair [@macdermid2015]. The QuickDASH assesses a variety of activities including work, sports, and social activities. A minimum of 10 out of 11 items are required for calculation of a *Quick*Dash score, which ranges from 0 (no disability) to 100 (most severe disability). The MCID score for the QuickDASH is 15.91 points [@franchignoni2014].
 
 The EQ-5D 5L is a generic tool for measuring quality of life, describing health in terms of five dimensions: mobility, self-care, usual activities, pain and discomfort, and anxiety and depression [@conner-spady2015]. Patients respond to each item on a 5 level range of severity, following the format of "no problems", "slight problems", "moderate problems", "severe problems", and "unable to or extreme problems". The EQ-5D 5L has been shown to have good validity and discriminatory power in a range of pathologies [@janssen2012]. The MCID is approximately 0.074 [@walters2005].
 
@@ -1340,7 +1338,12 @@ MasterIndPiv <- tidyr::pivot_longer(
   values_drop_na = TRUE
   )
 
+
 ```
+
+#### Primary Analysis
+
+A linear model was applied to the pooled imputations, with and without covariate adjustment. Average (marginal) estimates were calculated using *marginaleffects* package across different cohorts, with adjusted p-values calculated using the "false discovery rate" to compensate for multiple comparisons and the inflated risk of Type 1 error.
 
 # Analysis Results
 
@@ -1355,8 +1358,6 @@ The initial export from the registry returned {nrow(SnapshotComb)} records of al
 ### RECORD \[13.1\] Treatment selection
 
 A flow chart of individual treatment episodes (treatments) was generated using the *consort* package and prepared for display with the *knitr* package.
-
-The diagram below summarises recruitment and categorisation of patients into the PRULO registry.
 
 ```{r}
 #| label: fig-strobe
@@ -1383,7 +1384,7 @@ STROBEPlot <- consort_plot(data = STROBEFlow,
 knitr::knit_print(STROBEPlot)
 ```
 
-The table below summarises patient diagnoses in the PRULO registry.
+The @fig-strobe summarises recruitment into the PRULO registry and categorisation of patients into three cohorts based on diagnosis.
 
 ```{r}
 #| label: tbl-diagnosis
@@ -1410,6 +1411,8 @@ knitr::kable(TableData)
 
 
 ```
+
+@tbl-diagnosis highlights the top five most common patient diagnoses in the PRULO registry as coded by the ICD-10 system.
 
 ## RECORD \[14\] Patient characteristics
 
@@ -1531,7 +1534,7 @@ gtsummary::as_flex_table(Table4)
 
 ```
 
-Complete case analysis of the QuickDASH total score and EQ5D Index were summarised using the *gtsummary* package (@tbl-proms). The Glenohumeral Instability cohort displayed significantly lower upper limb disability (QuickDASH) and higher self-rated general health (EQ5D) compared to the other cohorts.
+Complete case analysis of the QuickDASH total score and EQ5D Index @tbl-proms revealed Glenohumeral Instability cohort displayed significantly lower upper limb disability (QuickDASH) and higher self-rated general health (EQ5D) compared to the other cohorts.
 
 ### Visualize responses
 
@@ -1548,6 +1551,20 @@ MastersheetIndSum1 <- MasterIndPiv |>
       .default = Cohort
     )
   )
+
+
+
+MastersheetIndSum1 <- MasterIndPiv |>
+  filter(!is.na(EQ5D5L) & !is.na(Cohort) & !is.na(Dimension)) |>
+  group_by(Cohort, Dimension, EQ5D5L) %>%
+  summarise(count = n(), .groups = 'drop') |> mutate(
+    Cohort2 = case_when(
+      Cohort == "Glenohumeral Instability" ~ "GHI",
+      Cohort == "Rotator Cuff" ~ "RC",
+      .default = Cohort
+    )
+  )
+
 ```
 
 ```{r}
@@ -1573,9 +1590,11 @@ knitr::knit_print(Fig1EQ5D)
 
 ```
 
+The patterns in @fig-eq5d-ind showed some subtle differences in *Pain*, *Mobility* and *Self-care*.
+
 ## RECORD \[16\] Main results
 
-The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5). A significant main effect for diagnostic group (cohort) was observed for both scores. The adjusted models corrected for optimism with respect to coefficients.
+The imputed datasets for QDASH and EQ5D5L were modeled with a linear model, in both unadjusted (no covariates) and adjusted forms (see RECORD 12.5). A significant main effect for diagnostic group (cohort) was observed for both scores.
 
 ```{r}
 #| label: tbl-PROMfit
@@ -1693,7 +1712,7 @@ gtsummary::as_flex_table(TablePROMfitAdj)
 ```
 
 ```{epoxy}
-For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
+The adjusted models corrected for optimism with respect to coefficients. For example, the coefficient for Glenohumeral Instability returned {gtsummary::inline_text(QDASHfitimpUnadj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")} compared to the adjusted {gtsummary::inline_text(QDASHfitimpAdj,variable = Cohort,level = "Glenohumeral Instability", pattern = "{estimate}")}. 
 This represents a {round((12.57 - 7.79)/12.57*100,2)}% reduction in the size of the effect. The adjustment for EQ5D was greater. Post-hoc pairwise comparisons revealed significant differences between the Glenohumeral Instability group compared to the General and Rotator Cuff groups for both condition-specific and general health scales.
 ```
 
@@ -1706,13 +1725,17 @@ QDASHPost <- marginaleffects::avg_comparisons(
   variables = list(Cohort = "pairwise"),
   type = "response"
   #re.form = NA
-  ) 
+  ) |> 
+  dplyr::mutate(adjust.p = p.adjust(p.value, method = "fdr")) |>
+  dplyr::relocate(
+    adjust.p, .after = p.value
+  )
 
 
 knitr::kable(
   QDASHPost |> dplyr::select(-term),
   digits = c(
-    0,2,2,2,2,2,3,2,2
+    0,2,2,2,3,3,2,2,2,2
   )
   )  
 
@@ -1727,13 +1750,17 @@ EQ5DPost <- marginaleffects::avg_comparisons(
   variables = list(Cohort = "pairwise"),
   type = "response"
   #re.form = NA
-  ) 
+  ) |> 
+  dplyr::mutate(adjust.p = p.adjust(p.value, method = "fdr")) |>
+  dplyr::relocate(
+    adjust.p, .after = p.value
+  )
 
 
 knitr::kable(
   EQ5DPost |> dplyr::select(-term),
   digits = c(
-    0,2,2,2,2,2,3,2,2
+    0,2,2,2,3,3,2,2,2,2
   )
   )  
 
@@ -1790,6 +1817,20 @@ gtsummary::as_flex_table(TablePROMimpSum)
 ## RECORD \[17\] Sensitivity analyses
 
 Does it make a difference if subgroups (adhesive capsulitis, osteoarthritis, trauma, acromioclavicular conditions) are split from the general cohort? Regular expressions were used in the *stringr* package to identify diagnosis codes that match two of the higher-incidence diagnoses, that are categorised under the General diagnostic group as indicated in @tbl-diagnosis.
+
+The specific cohorts were the following, with the remaining cases retained in *General*;
+
+-   Rotator cuff pathology
+
+-   Glenohumeral Instability
+
+-   Adhesive capsulitis
+
+-   Trauma (with any type of fracture about the shoulder girdle)
+
+-   Arthritis
+
+-   Acromioclavicular pathologies (dislocation, injury)
 
 ```{r}
 
@@ -1952,8 +1993,6 @@ TablePROMSens <- tbl_summary(
 gtsummary::as_flex_table(TablePROMSens)
 ```
 
-
-
 ```{r}
 
 # MasterSens1
@@ -1976,7 +2015,7 @@ MasterImp2 <- mice::mice(MasterSens1,
 
 ```
 
-The results identified differences between the expanded diagnostic groups, with the Glenohumeral Instability group significantly different to other groups for the QuickDASH, but not the EQ5D. However, the pairwise comparisons revealed estimates that were below the MCID for all significant comparisons for the QuickDASH.
+The complete case analysis @tbl-proms-sens identified differences between the expanded diagnostic groups, ranging in disability (QuickDASH) from the Glenohumeral Instability group (minimum) to the Trauma group (maximum).
 
 ```{r}
 #| label: tbl-PROMsens
@@ -2049,6 +2088,8 @@ gtsummary::as_flex_table(TablePROMSens)
 
 ```
 
+The linear model @tbl-PROMsens on the imputed dataset observed more conservative differences between cohorts for the QuickDASH, but the differences for EQ5D were stable between complete case analysis and imputed model comparisons.
+
 ```{r}
 #| label: tbl-QDASHsenspost
 #| tbl-cap: "Post-hoc comparisons between modified cohorts for QuickDASH."
@@ -2058,16 +2099,22 @@ QDASHfitPost2 <- marginaleffects::avg_comparisons(
   variables = list(Cohort2 = "pairwise"),
   type = "response"
   #re.form = NA
-  )  
+  ) |> 
+  dplyr::mutate(adjust.p = p.adjust(p.value, method = "fdr")) |>
+  dplyr::relocate(
+    adjust.p, .after = p.value
+  )
 
 knitr::kable(
   QDASHfitPost2 |> dplyr::select(-term),
   digits = c(
-    0,2,2,2,2,2,3,2,2
+    0,2,2,2,3,3,2,2,2,2
   )
   )
 
 ```
+
+The post-hoc comparisons for the QuickDASH @tbl-QDASHsenspost identified certain comparisons
 
 ```{r}
 #| label: tbl-EQ5Dsenspost
