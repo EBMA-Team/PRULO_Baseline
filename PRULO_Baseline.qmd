@@ -1539,21 +1539,8 @@ Complete case analysis of the QuickDASH total score and EQ5D Index @tbl-proms re
 ### Visualize responses
 
 ```{r}
-# Method 1: Using dplyr to summarize the data
+
 # Create summary data
-MastersheetIndSum1 <- MasterIndPiv |>
-  filter(!is.na(EQ5D5L) & !is.na(Cohort) & !is.na(Dimension)) |>
-  group_by(Cohort, Dimension, EQ5D5L) %>%
-  summarise(count = n(), .groups = 'drop') |> mutate(
-    Cohort2 = case_when(
-      Cohort == "Glenohumeral Instability" ~ "GHI",
-      Cohort == "Rotator Cuff" ~ "RC",
-      .default = Cohort
-    )
-  )
-
-
-
 MastersheetIndSum1 <- MasterIndPiv |>
   filter(!is.na(EQ5D5L) & !is.na(Cohort) & !is.na(Dimension)) |>
   group_by(Cohort, Dimension, EQ5D5L) %>%
@@ -1590,7 +1577,7 @@ knitr::knit_print(Fig1EQ5D)
 
 ```
 
-The patterns in @fig-eq5d-ind showed some subtle differences in *Pain*, *Mobility* and *Self-care*.
+The patterns in @fig-eq5d-ind showed some differences in *Pain*, *Mobility* and *Self-care*. Further analysis is required to discern whether the patterns may be associated with cohort membership when adjusted for other factors.  
 
 ## RECORD \[16\] Main results
 
@@ -1936,7 +1923,7 @@ TableSensChar <- MasterSens1 |>
     SmokingStatus_Preop ~ "Smoking",
     ActivityLevel_Preop ~ "Activity",
     AlcoholConsumption_Preop ~ "Alcohol",
-    CompStatus ~ "Insurance"
+    CompStatus ~ "Compensation"
     ),
     by = Cohort2,
     type = list(
@@ -1957,12 +1944,8 @@ TableSensChar <- MasterSens1 |>
     location = "row"
   ) |> modify_table_styling(
       columns = label,
-      rows = label == "DVA",
-      footnote = "DVA = Department of Veterans Affairs"
-    ) |> modify_table_styling(
-      columns = label,
-      rows = label == "TAC",
-      footnote = "TAC = Transport Accident Commission"
+      rows = label == "Compstatus",
+      footnote = "Compensation = Third-party compensation scheme (Workcover|DVA|TAC)"
     ) |> add_overall()
 
 gtsummary::as_flex_table(TableSensChar)
